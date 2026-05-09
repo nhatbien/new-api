@@ -45,7 +45,7 @@ func GetCodexChannelUsage(c *gin.Context) {
 	oauthKey, err := codex.ParseOAuthKey(strings.TrimSpace(ch.Key))
 	if err != nil {
 		common.SysError("failed to parse oauth key: " + err.Error())
-		c.JSON(http.StatusOK, gin.H{"success": false, "message": "解析凭证失败，请检查渠道配置"})
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": "failed to parse credentials, please check channel configuration"})
 		return
 	}
 	accessToken := strings.TrimSpace(oauthKey.AccessToken)
@@ -71,7 +71,7 @@ func GetCodexChannelUsage(c *gin.Context) {
 	statusCode, body, err := service.FetchCodexWhamUsage(ctx, client, ch.GetBaseURL(), accessToken, accountID)
 	if err != nil {
 		common.SysError("failed to fetch codex usage: " + err.Error())
-		c.JSON(http.StatusOK, gin.H{"success": false, "message": "获取用量信息失败，请稍后重试"})
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": "failed to get usage information, please retry later"})
 		return
 	}
 
@@ -101,26 +101,21 @@ func GetCodexChannelUsage(c *gin.Context) {
 			statusCode, body, err = service.FetchCodexWhamUsage(ctx2, client, ch.GetBaseURL(), oauthKey.AccessToken, accountID)
 			if err != nil {
 				common.SysError("failed to fetch codex usage after refresh: " + err.Error())
-				c.JSON(http.StatusOK, gin.H{"success": false, "message": "获取用量信息失败，请稍后重试"})
+				c.JSON(http.StatusOK, gin.H{"success": false, "message": "failed to get usage information, please retry later"})
 				return
 			}
 		}
 	}
 
 	var payload any
-	if common.Unmarshal(body, &payload) != nil {
-		payload = string(body)
+	if err := common.Unmarshal(body, &payload); err != nil {
+		common.SysError("failed to unmarshal codex usage response: " + err.Error())
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": "failed to parse usage response"})
+		return
 	}
 
-	ok := statusCode >= 200 && statusCode < 300
-	resp := gin.H{
-		"success":         ok,
-		"message":         "",
-		"upstream_status": statusCode,
-		"data":            payload,
-	}
-	if !ok {
-		resp["message"] = fmt.Sprintf("upstream status: %d", statusCode)
-	}
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    payload,
+	})
 }

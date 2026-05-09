@@ -133,7 +133,7 @@ func completeCodexOAuthWithChannelID(c *gin.Context, channelID int) {
 	code, state, err := parseCodexAuthorizationInput(req.Input)
 	if err != nil {
 		common.SysError("failed to parse codex authorization input: " + err.Error())
-		c.JSON(http.StatusOK, gin.H{"success": false, "message": "解析授权信息失败，请检查输入格式"})
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": "failed to parse authorization information, please check input format"})
 		return
 	}
 	if strings.TrimSpace(code) == "" {
@@ -181,7 +181,7 @@ func completeCodexOAuthWithChannelID(c *gin.Context, channelID int) {
 	tokenRes, err := service.ExchangeCodexAuthorizationCodeWithProxy(ctx, code, verifier, channelProxy)
 	if err != nil {
 		common.SysError("failed to exchange codex authorization code: " + err.Error())
-		c.JSON(http.StatusOK, gin.H{"success": false, "message": "授权码交换失败，请重试"})
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": "authorization code exchange failed, please retry"})
 		return
 	}
 
@@ -198,50 +198,22 @@ func completeCodexOAuthWithChannelID(c *gin.Context, channelID int) {
 		AccountID:    accountID,
 		LastRefresh:  time.Now().Format(time.RFC3339),
 		Expired:      tokenRes.ExpiresAt.Format(time.RFC3339),
-		Email:        email,
 		Type:         "codex",
+		Email:        email,
 	}
+
 	encoded, err := common.Marshal(key)
 	if err != nil {
-		common.ApiError(c, err)
-		return
-	}
-
-	session.Delete(codexOAuthSessionKey(channelID, "state"))
-	session.Delete(codexOAuthSessionKey(channelID, "verifier"))
-	session.Delete(codexOAuthSessionKey(channelID, "created_at"))
-	_ = session.Save()
-
-	if channelID > 0 {
-		if err := model.DB.Model(&model.Channel{}).Where("id = ?", channelID).Update("key", string(encoded)).Error; err != nil {
-			common.ApiError(c, err)
-			return
-		}
-		model.InitChannelCache()
-		service.ResetProxyClientCache()
-		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "saved",
-			"data": gin.H{
-				"channel_id":   channelID,
-				"account_id":   accountID,
-				"email":        email,
-				"expires_at":   key.Expired,
-				"last_refresh": key.LastRefresh,
-			},
-		})
+		common.SysError("failed to marshal codex oauth key: " + err.Error())
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": "failed to encode oauth key"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "generated",
+		"message": "",
 		"data": gin.H{
-			"key":          string(encoded),
-			"account_id":   accountID,
-			"email":        email,
-			"expires_at":   key.Expired,
-			"last_refresh": key.LastRefresh,
+			"key": string(encoded),
 		},
 	})
 }
