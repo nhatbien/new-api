@@ -6,14 +6,17 @@ import {
   calculateStripeAmount,
   calculateWaffoPancakeAmount,
   requestPayment,
+  requestSepayPayment,
   requestStripePayment,
   isApiSuccess,
 } from '../api'
 import {
+  isSepayPayment,
   isStripePayment,
   isWaffoPancakePayment,
   submitPaymentForm,
 } from '../lib'
+import type { SepayPaymentData } from '../types'
 
 // ============================================================================
 // Payment Hook
@@ -23,6 +26,9 @@ export function usePayment() {
   const [amount, setAmount] = useState<number>(0)
   const [calculating, setCalculating] = useState(false)
   const [processing, setProcessing] = useState(false)
+  const [sepayPayment, setSepayPayment] = useState<SepayPaymentData | null>(
+    null
+  )
 
   // Calculate payment amount
   const calculatePaymentAmount = useCallback(
@@ -64,6 +70,7 @@ export function usePayment() {
         setProcessing(true)
 
         const isStripe = isStripePayment(paymentType)
+        const isSepay = isSepayPayment(paymentType)
         const amount = Math.floor(topupAmount)
 
         const response = isStripe
@@ -71,6 +78,11 @@ export function usePayment() {
               amount,
               payment_method: 'stripe',
             })
+          : isSepay
+            ? await requestSepayPayment({
+                amount,
+                payment_method: 'sepay',
+              })
           : await requestPayment({
               amount,
               payment_method: paymentType,
@@ -82,14 +94,23 @@ export function usePayment() {
         }
 
         // Handle Stripe payment
-        if (isStripe && response.data?.pay_link) {
-          window.open(response.data.pay_link as string, '_blank')
+        const responseData = response.data as Record<string, unknown> | undefined
+
+        if (isStripe && typeof responseData?.pay_link === 'string') {
+          window.open(responseData.pay_link, '_blank')
           toast.success(i18next.t('Redirecting to payment page...'))
           return true
         }
 
+        // Handle SEPAY VietQR payment
+        if (isSepay && typeof responseData?.qr_url === 'string') {
+          setSepayPayment(response.data as SepayPaymentData)
+          toast.success(i18next.t('Scan QR code to complete payment'))
+          return true
+        }
+
         // Handle non-Stripe payment
-        if (!isStripe && response.data) {
+        if (!isStripe && !isSepay && response.data) {
           const url = (response as unknown as { url?: string }).url
           if (url) {
             submitPaymentForm(url, response.data)
@@ -113,8 +134,10 @@ export function usePayment() {
     amount,
     calculating,
     processing,
+    sepayPayment,
     calculatePaymentAmount,
     processPayment,
     setAmount,
+    setSepayPayment,
   }
 }

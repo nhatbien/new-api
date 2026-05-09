@@ -136,6 +136,13 @@ const BILLING_SECTIONS = [
           CreemWebhookSecret: settings.CreemWebhookSecret,
           CreemTestMode: settings.CreemTestMode,
           CreemProducts: settings.CreemProducts,
+          SepayEnabled: settings.SepayEnabled ?? false,
+          SepayBankCode: settings.SepayBankCode ?? '',
+          SepayAccountNumber: settings.SepayAccountNumber ?? '',
+          SepayAccountName: settings.SepayAccountName ?? '',
+          SepayWebhookSecret: settings.SepayWebhookSecret ?? '',
+          SepayQrTemplate: settings.SepayQrTemplate ?? 'compact2',
+          SepayMinTopUp: settings.SepayMinTopUp ?? 1,
         }}
         waffoDefaultValues={{
           WaffoEnabled: settings.WaffoEnabled ?? false,
