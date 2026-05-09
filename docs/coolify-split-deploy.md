@@ -25,6 +25,9 @@ NODE_NAME=new-api-backend-1
 
 Replace `https://app.example.com` with the frontend domain.
 
+`FRONTEND_BASE_URL` is also used as the allowed CORS origin for direct
+cross-domain browser requests from the frontend to the backend.
+
 Notes:
 
 - `Dockerfile.backend` intentionally skips `web/default` and `web/classic` builds.
@@ -48,21 +51,14 @@ Create a second Coolify application from the same repository.
 Environment variables:
 
 ```env
-BACKEND_URL=https://api.example.com
+VITE_REACT_APP_SERVER_URL=https://api.example.com
 ```
 
 `Dockerfile.frontend` builds `web/default` with Bun, serves the generated `dist`
-with Nginx, and proxies API paths to `BACKEND_URL`:
-
-```text
-/api
-/v1
-/mj
-/pg
-```
-
-Use this option when you want the frontend app itself to handle SPA routing and
-API proxying.
+with Nginx, and the browser calls the backend directly via
+`VITE_REACT_APP_SERVER_URL`. The Docker image also writes `/env.js` at container
+startup, so this value can be changed in Coolify environment variables without
+rebuilding the frontend image.
 
 ### Option B: Coolify static site
 
@@ -79,8 +75,8 @@ VITE_REACT_APP_SERVER_URL=https://api.example.com
 
 The production frontend commonly calls API routes by relative paths such as
 `/api`, `/v1`, `/mj`, and `/pg`. If the frontend and backend use different
-domains and you do not use `Dockerfile.frontend`, configure Coolify/Traefik/Nginx
-routing for the frontend domain:
+domains and `VITE_REACT_APP_SERVER_URL` is not set, configure
+Coolify/Traefik/Nginx routing for the frontend domain:
 
 ```text
 /api  -> backend app port 3000
@@ -98,3 +94,6 @@ Backend:  https://api.example.com
 
 With the proxy rules above, browser requests to
 `https://app.example.com/api/status` are forwarded to the backend service.
+
+For direct backend calls, browser requests go to
+`https://api.example.com/api/status` instead.

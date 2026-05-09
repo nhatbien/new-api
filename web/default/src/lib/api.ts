@@ -3,12 +3,31 @@ import i18next from 'i18next'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 
+declare global {
+  interface Window {
+    __APP_CONFIG__?: {
+      VITE_REACT_APP_SERVER_URL?: string
+    }
+  }
+}
+
 // ============================================================================
 // Axios Instance Configuration
 // ============================================================================
 
-// Base URL: empty string for same-origin API requests
-const baseURL = ''
+// Base URL: empty string for same-origin API requests, or set
+// VITE_REACT_APP_SERVER_URL to call a separated backend directly.
+export const baseURL = (
+  window.__APP_CONFIG__?.VITE_REACT_APP_SERVER_URL ||
+  import.meta.env.VITE_REACT_APP_SERVER_URL ||
+  ''
+).replace(/\/$/, '')
+
+export function getApiUrl(path: string): string {
+  if (!baseURL) return path
+  if (/^https?:\/\//i.test(path)) return path
+  return `${baseURL}${path.startsWith('/') ? path : `/${path}`}`
+}
 
 // Create axios instance with default config
 export const api = axios.create({
