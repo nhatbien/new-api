@@ -234,13 +234,6 @@ export type BillingSettings = {
   WaffoPancakeCurrency: string
   WaffoPancakeUnitPrice: number
   WaffoPancakeMinTopUp: number
-  SepayEnabled: boolean
-  SepayBankCode: string
-  SepayAccountNumber: string
-  SepayAccountName: string
-  SepayWebhookSecret: string
-  SepayQrTemplate: string
-  SepayMinTopUp: number
   'checkin_setting.enabled': boolean
   'checkin_setting.min_quota': number
   'checkin_setting.max_quota': number

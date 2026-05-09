@@ -90,33 +90,12 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
-	enableSepay := isSepayTopUpEnabled()
-	if enableSepay {
-		hasSepay := false
-		for _, method := range payMethods {
-			if method["type"] == model.PaymentMethodSepay {
-				hasSepay = true
-				break
-			}
-		}
-
-		if !hasSepay {
-			payMethods = append(payMethods, map[string]string{
-				"name":      "SEPAY VietQR",
-				"type":      model.PaymentMethodSepay,
-				"color":     "rgba(var(--semi-green-5), 1)",
-				"min_topup": strconv.Itoa(setting.SepayMinTopUp),
-			})
-		}
-	}
-
 	data := gin.H{
 		"enable_online_topup":        isEpayTopUpEnabled(),
 		"enable_stripe_topup":        isStripeTopUpEnabled(),
 		"enable_creem_topup":         isCreemTopUpEnabled(),
 		"enable_waffo_topup":         enableWaffo,
 		"enable_waffo_pancake_topup": enableWaffoPancake,
-		"enable_sepay_topup":         enableSepay,
 		"waffo_pay_methods": func() interface{} {
 			if enableWaffo {
 				return setting.GetWaffoPayMethods()
@@ -129,7 +108,6 @@ func GetTopUpInfo(c *gin.Context) {
 		"stripe_min_topup":        setting.StripeMinTopUp,
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
-		"sepay_min_topup":         setting.SepayMinTopUp,
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
 		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,
 		"topup_link":              common.TopUpLink,
@@ -205,13 +183,6 @@ func RequestEpay(c *gin.Context) {
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "参数错误"})
-		return
-	}
-	if req.PaymentMethod == model.PaymentMethodSepay {
-		handleSepayPay(c, &SepayPayRequest{
-			Amount:        req.Amount,
-			PaymentMethod: req.PaymentMethod,
-		})
 		return
 	}
 	if req.Amount < getMinTopup() {

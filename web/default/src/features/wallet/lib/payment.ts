@@ -69,13 +69,6 @@ export function isWaffoPancakePayment(paymentType: string): boolean {
 }
 
 /**
- * Check if payment method is SEPAY VietQR.
- */
-export function isSepayPayment(paymentType: string): boolean {
-  return paymentType === PAYMENT_TYPES.SEPAY
-}
-
-/**
  * Get default payment type from topup info
  */
 export function getDefaultPaymentType(topupInfo: TopupInfo | null): string {
@@ -98,10 +91,6 @@ export function getDefaultPaymentType(topupInfo: TopupInfo | null): string {
 
   if (topupInfo.enable_waffo_pancake_topup) {
     return PAYMENT_TYPES.WAFFO_PANCAKE
-  }
-
-  if (topupInfo.enable_sepay_topup) {
-    return PAYMENT_TYPES.SEPAY
   }
 
   return DEFAULT_PAYMENT_TYPE
@@ -129,10 +118,6 @@ export function getMinTopupAmount(topupInfo: TopupInfo | null): number {
 
   if (topupInfo.enable_waffo_pancake_topup) {
     return topupInfo.waffo_pancake_min_topup || DEFAULT_MIN_TOPUP
-  }
-
-  if (topupInfo.enable_sepay_topup) {
-    return topupInfo.sepay_min_topup || DEFAULT_MIN_TOPUP
   }
 
   return DEFAULT_MIN_TOPUP

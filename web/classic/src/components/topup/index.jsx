@@ -75,7 +75,6 @@ const TopUp = () => {
   const [waffoMinTopUp, setWaffoMinTopUp] = useState(1);
   const [enableWaffoPancakeTopUp, setEnableWaffoPancakeTopUp] = useState(false);
   const [waffoPancakeMinTopUp, setWaffoPancakeMinTopUp] = useState(1);
-  const [enableSepayTopUp, setEnableSepayTopUp] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
@@ -206,11 +205,6 @@ const TopUp = () => {
         showError(t('管理员未开启 Waffo 充值！'));
         return;
       }
-    } else if (payment === 'sepay') {
-      if (!enableSepayTopUp) {
-        showError(t('管理员未开启 SEPAY 充值！'));
-        return;
-      }
     } else {
       if (!enableOnlineTopUp) {
         showError(t('管理员未开启在线充值！'));
@@ -285,11 +279,6 @@ const TopUp = () => {
           amount: parseInt(topUpCount),
           payment_method: 'stripe',
         });
-      } else if (payWay === 'sepay') {
-        res = await API.post('/api/user/sepay/pay', {
-          amount: parseInt(topUpCount),
-          payment_method: 'sepay',
-        });
       } else {
         // 普通支付请求
         res = await API.post('/api/user/pay', {
@@ -304,32 +293,6 @@ const TopUp = () => {
           if (payWay === 'stripe') {
             // Stripe 支付回调处理
             window.open(data.pay_link, '_blank');
-          } else if (payWay === 'sepay') {
-            Modal.info({
-              title: t('SEPAY VietQR Payment'),
-              content: (
-                <div className='flex flex-col items-center gap-3'>
-                  <img
-                    src={data.qr_url}
-                    alt='SEPAY VietQR'
-                    style={{ width: 260, height: 260, objectFit: 'contain' }}
-                  />
-                  <div className='text-sm'>
-                    <div>
-                      {t('Amount')}:{' '}
-                      {Number(data.amount).toLocaleString('vi-VN')} VND
-                    </div>
-                    <div>
-                      {t('Content')}: {data.description}
-                    </div>
-                    <div>
-                      {t('Account')}: {data.account_number}
-                    </div>
-                  </div>
-                </div>
-              ),
-              centered: true,
-            });
           } else {
             // 普通支付表单提交
             let params = data;
@@ -674,7 +637,6 @@ const TopUp = () => {
           const enableWaffoTopUp = data.enable_waffo_topup || false;
           const enableWaffoPancakeTopUp =
             data.enable_waffo_pancake_topup || false;
-          const enableSepayTopUp = data.enable_sepay_topup || false;
           const minTopUpValue = enableOnlineTopUp
             ? data.min_topup
             : enableStripeTopUp
@@ -683,9 +645,7 @@ const TopUp = () => {
                 ? data.waffo_min_topup
                 : enableWaffoPancakeTopUp
                   ? data.waffo_pancake_min_topup
-                  : enableSepayTopUp
-                    ? data.sepay_min_topup
-                    : 1;
+                : 1;
           setEnableOnlineTopUp(enableOnlineTopUp);
           setEnableStripeTopUp(enableStripeTopUp);
           setEnableCreemTopUp(enableCreemTopUp);
@@ -694,7 +654,6 @@ const TopUp = () => {
           setWaffoMinTopUp(data.waffo_min_topup || 1);
           setEnableWaffoPancakeTopUp(enableWaffoPancakeTopUp);
           setWaffoPancakeMinTopUp(data.waffo_pancake_min_topup || 1);
-          setEnableSepayTopUp(enableSepayTopUp);
           setMinTopUp(minTopUpValue);
           setTopUpCount(minTopUpValue);
           setTopUpLink(data.topup_link || '');
@@ -990,7 +949,6 @@ const TopUp = () => {
           creemPreTopUp={creemPreTopUp}
           enableWaffoTopUp={enableWaffoTopUp}
           enableWaffoPancakeTopUp={enableWaffoPancakeTopUp}
-          enableSepayTopUp={enableSepayTopUp}
           presetAmounts={presetAmounts}
           selectedPreset={selectedPreset}
           selectPresetAmount={selectPresetAmount}

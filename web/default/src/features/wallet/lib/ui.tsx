@@ -109,13 +109,6 @@ export function getPaymentIcon(
           style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.WAFFO_PANCAKE] }}
         />
       )
-    case PAYMENT_TYPES.SEPAY:
-      return (
-        <Landmark
-          className={className}
-          style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.SEPAY] }}
-        />
-      )
     default:
       return <CreditCard className={className} />
   }

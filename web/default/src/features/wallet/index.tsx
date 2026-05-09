@@ -8,7 +8,6 @@ import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
 import { PaymentConfirmDialog } from './components/dialogs/payment-confirm-dialog'
-import { SepayQrDialog } from './components/dialogs/sepay-qr-dialog'
 import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
@@ -71,10 +70,8 @@ export function Wallet(props: WalletProps) {
     amount: paymentAmount,
     calculating,
     processing,
-    sepayPayment,
     calculatePaymentAmount,
     processPayment,
-    setSepayPayment,
   } = usePayment()
   const {
     affiliateLink,
@@ -342,14 +339,6 @@ export function Wallet(props: WalletProps) {
         onConfirm={handleCreemConfirm}
         product={selectedCreemProduct}
         processing={creemProcessing}
-      />
-
-      <SepayQrDialog
-        open={!!sepayPayment}
-        onOpenChange={(open) => {
-          if (!open) setSepayPayment(null)
-        }}
-        payment={sepayPayment}
       />
     </>
   )
