@@ -18,13 +18,30 @@ func CORS() gin.HandlerFunc {
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "New-Api-User", "X-Requested-With", "Cache-Control", "Pragma"}
 	config.ExposeHeaders = []string{"Content-Length"}
 	config.MaxAge = 12 * time.Hour
-	frontendBaseUrl := strings.TrimSuffix(os.Getenv("FRONTEND_BASE_URL"), "/")
-	if frontendBaseUrl != "" {
-		config.AllowOrigins = []string{frontendBaseUrl}
+	frontendBaseUrls := getFrontendBaseUrls()
+	if len(frontendBaseUrls) > 0 {
+		config.AllowOrigins = frontendBaseUrls
 	} else {
 		config.AllowOriginFunc = isValidCorsOrigin
 	}
 	return cors.New(config)
+}
+
+func getFrontendBaseUrls() []string {
+	frontendBaseUrl := os.Getenv("FRONTEND_BASE_URL")
+	if frontendBaseUrl == "" {
+		return nil
+	}
+
+	urls := make([]string, 0)
+	for _, rawUrl := range strings.Split(frontendBaseUrl, ",") {
+		trimmedUrl := strings.TrimSuffix(strings.TrimSpace(rawUrl), "/")
+		if trimmedUrl != "" {
+			urls = append(urls, trimmedUrl)
+		}
+	}
+
+	return urls
 }
 
 func isValidCorsOrigin(origin string) bool {

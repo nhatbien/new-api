@@ -78,8 +78,10 @@ const queryClient = new QueryClient({
 const router = createRouter({
   routeTree,
   context: { queryClient },
-  defaultPreload: 'intent',
-  defaultPreloadStaleTime: 0,
+  // TanStack Router 1.168.x can throw an internal `_nonReactive` preload
+  // error when intent preloading races with redirects or failed guard requests.
+  // Keep route loading navigation-driven until the upstream issue is fixed.
+  defaultPreload: false,
 })
 
 // Register the router instance for type safety

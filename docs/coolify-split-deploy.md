@@ -23,7 +23,9 @@ BATCH_UPDATE_ENABLED=true
 NODE_NAME=new-api-backend-1
 ```
 
-Replace `https://app.example.com` with the frontend domain.
+Replace `https://app.example.com` with the frontend domain. For multiple
+frontend domains, use a comma-separated list, for example
+`FRONTEND_BASE_URL=https://app.example.com,https://www.example.com`.
 
 `FRONTEND_BASE_URL` is also used as the allowed CORS origin for direct
 cross-domain browser requests from the frontend to the backend.
