@@ -10,6 +10,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/net/publicsuffix"
 )
 
 func CORS() gin.HandlerFunc {
@@ -105,18 +106,18 @@ func getCorsOriginDomainVariants(origin string) []string {
 		return nil
 	}
 
-	variant := *parsed
-	port := parsed.Port()
-	if strings.HasPrefix(hostname, "www.") {
-		variant.Host = strings.TrimPrefix(hostname, "www.")
-	} else {
-		variant.Host = "www." + hostname
-	}
-	if port != "" {
-		variant.Host += ":" + port
+	registrableDomain, err := publicsuffix.EffectiveTLDPlusOne(hostname)
+	if err != nil || registrableDomain == hostname {
+		return nil
 	}
 
-	return []string{variant.String()}
+	rootVariant := *parsed
+	rootVariant.Host = registrableDomain
+	if port := parsed.Port(); port != "" {
+		rootVariant.Host += ":" + port
+	}
+
+	return []string{rootVariant.String()}
 }
 
 func PoweredBy() gin.HandlerFunc {
