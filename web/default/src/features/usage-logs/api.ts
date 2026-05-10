@@ -18,6 +18,11 @@ function buildApiPath(endpoint: string, isAdmin: boolean): string {
   return isAdmin ? endpoint : `${endpoint}/self`
 }
 
+function buildListApiPath(endpoint: string, isAdmin: boolean): string {
+  const path = buildApiPath(endpoint, isAdmin)
+  return isAdmin ? `${path}/` : path
+}
+
 async function fetchLogs<T>(
   endpoint: string,
   params: T,
@@ -29,7 +34,7 @@ async function fetchLogs<T>(
     page_size: paramRecord.page_size || 20,
     ...params,
   })
-  const path = buildApiPath(endpoint, isAdmin)
+  const path = buildListApiPath(endpoint, isAdmin)
   const res = await api.get(`${path}?${queryParams}`)
   return res.data
 }
