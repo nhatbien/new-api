@@ -21,21 +21,30 @@ func CORS() gin.HandlerFunc {
 	config.ExposeHeaders = []string{"Content-Length"}
 	config.MaxAge = 5 * time.Minute
 	frontendBaseUrls := getFrontendBaseUrls()
+	allowOrigin := isValidCorsOrigin
 	if len(frontendBaseUrls) > 0 {
 		allowedOrigins := make(map[string]struct{}, len(frontendBaseUrls))
 		for _, frontendBaseUrl := range frontendBaseUrls {
 			allowedOrigins[frontendBaseUrl] = struct{}{}
 		}
-		config.AllowOriginFunc = func(origin string) bool {
+		allowOrigin = func(origin string) bool {
 			_, ok := allowedOrigins[normalizeCorsOrigin(origin)]
 			return ok
 		}
-	} else {
-		config.AllowOriginFunc = isValidCorsOrigin
 	}
+	config.AllowOriginFunc = allowOrigin
 	corsHandler := cors.New(config)
 	return func(c *gin.Context) {
-		c.Writer.Header().Add("Vary", "Origin")
+		header := c.Writer.Header()
+		header.Add("Vary", "Origin")
+		header.Set("Cache-Control", "no-store")
+		if origin := c.Request.Header.Get("Origin"); origin != "" && allowOrigin(origin) {
+			header.Set("Access-Control-Allow-Origin", origin)
+			header.Set("Access-Control-Allow-Credentials", "true")
+			header.Set("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ","))
+			header.Set("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ","))
+			header.Set("Access-Control-Expose-Headers", strings.Join(config.ExposeHeaders, ","))
+		}
 		corsHandler(c)
 	}
 }
