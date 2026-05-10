@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,7 +21,14 @@ func CORS() gin.HandlerFunc {
 	config.MaxAge = 12 * time.Hour
 	frontendBaseUrls := getFrontendBaseUrls()
 	if len(frontendBaseUrls) > 0 {
-		config.AllowOrigins = frontendBaseUrls
+		allowedOrigins := make(map[string]struct{}, len(frontendBaseUrls))
+		for _, frontendBaseUrl := range frontendBaseUrls {
+			allowedOrigins[frontendBaseUrl] = struct{}{}
+		}
+		config.AllowOriginFunc = func(origin string) bool {
+			_, ok := allowedOrigins[normalizeCorsOrigin(origin)]
+			return ok
+		}
 	} else {
 		config.AllowOriginFunc = isValidCorsOrigin
 	}
@@ -33,23 +41,82 @@ func getFrontendBaseUrls() []string {
 		return nil
 	}
 
-	urls := make([]string, 0)
+	urls := make(map[string]struct{})
 	for _, rawUrl := range strings.Split(frontendBaseUrl, ",") {
-		trimmedUrl := strings.TrimSuffix(strings.TrimSpace(rawUrl), "/")
-		if trimmedUrl != "" {
-			urls = append(urls, trimmedUrl)
+		origin := normalizeCorsOrigin(rawUrl)
+		if origin != "" {
+			urls[origin] = struct{}{}
+			for _, variant := range getCorsOriginDomainVariants(origin) {
+				urls[variant] = struct{}{}
+			}
 		}
 	}
 
-	return urls
+	frontendBaseUrls := make([]string, 0, len(urls))
+	for frontendBaseUrl := range urls {
+		frontendBaseUrls = append(frontendBaseUrls, frontendBaseUrl)
+	}
+	sort.Strings(frontendBaseUrls)
+
+	return frontendBaseUrls
 }
 
 func isValidCorsOrigin(origin string) bool {
+	return normalizeCorsOrigin(origin) != ""
+}
+
+func normalizeCorsOrigin(origin string) string {
+	origin = strings.TrimSpace(origin)
+	if origin == "" {
+		return ""
+	}
+
 	parsed, err := url.Parse(origin)
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-		return false
+		return ""
 	}
-	return parsed.Scheme == "http" || parsed.Scheme == "https"
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return ""
+	}
+
+	parsed.User = nil
+	parsed.Path = ""
+	parsed.RawPath = ""
+	parsed.ForceQuery = false
+	parsed.RawQuery = ""
+	parsed.Fragment = ""
+	parsed.Host = strings.ToLower(parsed.Host)
+	if (parsed.Scheme == "http" && strings.HasSuffix(parsed.Host, ":80")) ||
+		(parsed.Scheme == "https" && strings.HasSuffix(parsed.Host, ":443")) {
+		parsed.Host = parsed.Hostname()
+	}
+
+	return strings.TrimSuffix(parsed.String(), "/")
+}
+
+func getCorsOriginDomainVariants(origin string) []string {
+	parsed, err := url.Parse(origin)
+	if err != nil || parsed.Host == "" {
+		return nil
+	}
+
+	hostname := parsed.Hostname()
+	if hostname == "" || strings.Contains(hostname, ":") || hostname == "localhost" {
+		return nil
+	}
+
+	variant := *parsed
+	port := parsed.Port()
+	if strings.HasPrefix(hostname, "www.") {
+		variant.Host = strings.TrimPrefix(hostname, "www.")
+	} else {
+		variant.Host = "www." + hostname
+	}
+	if port != "" {
+		variant.Host += ":" + port
+	}
+
+	return []string{variant.String()}
 }
 
 func PoweredBy() gin.HandlerFunc {
