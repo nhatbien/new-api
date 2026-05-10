@@ -75,7 +75,7 @@ func SetApiRouter(router *gin.Engine) {
 			userRoute.GET("/epay/notify", controller.EpayNotify)
 			userRoute.GET("/groups", controller.GetUserGroups)
 
-			selfRoute := userRoute.Group("/")
+			selfRoute := userRoute.Group("")
 			selfRoute.Use(middleware.UserAuth())
 			{
 				selfRoute.GET("/self/groups", controller.GetUserGroups)
@@ -122,7 +122,7 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.DELETE("/oauth/bindings/:provider_id", controller.UnbindCustomOAuth)
 			}
 
-			adminRoute := userRoute.Group("/")
+			adminRoute := userRoute.Group("")
 			adminRoute.Use(middleware.AdminAuth())
 			{
 				adminRoute.GET("", controller.GetAllUsers)
@@ -380,7 +380,6 @@ func SetApiRouter(router *gin.Engine) {
 			modelsRoute.GET("/sync_upstream/preview", controller.SyncUpstreamPreview)
 			modelsRoute.POST("/sync_upstream", controller.SyncUpstreamModels)
 			modelsRoute.GET("/missing", controller.GetMissingModels)
-			modelsRoute.GET("", controller.GetAllModelsMeta)
 			modelsRoute.GET("/", controller.GetAllModelsMeta)
 			modelsRoute.GET("/search", controller.SearchModelsMeta)
 			modelsRoute.GET("/:id", controller.GetModelMeta)
