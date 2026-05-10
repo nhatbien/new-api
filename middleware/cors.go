@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/url"
 	"os"
 	"strings"
 
@@ -18,10 +19,17 @@ func CORS() gin.HandlerFunc {
 	if frontendBaseUrl != "" {
 		config.AllowOrigins = []string{frontendBaseUrl}
 	} else {
-		config.AllowAllOrigins = true
-		config.AllowCredentials = false
+		config.AllowOriginFunc = isValidCorsOrigin
 	}
 	return cors.New(config)
+}
+
+func isValidCorsOrigin(origin string) bool {
+	parsed, err := url.Parse(origin)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return false
+	}
+	return parsed.Scheme == "http" || parsed.Scheme == "https"
 }
 
 func PoweredBy() gin.HandlerFunc {
