@@ -26,6 +26,11 @@ import {
 import axios from 'axios';
 import { MESSAGE_ROLES } from '../constants/playground.constants';
 
+function normalizeRequestUrl(url) {
+  if (!url || /^https?:\/\//i.test(url)) return url;
+  return url.replace(/\/(\?|$)/, '$1');
+}
+
 export let API = axios.create({
   baseURL: import.meta.env.VITE_REACT_APP_SERVER_URL
     ? import.meta.env.VITE_REACT_APP_SERVER_URL
@@ -105,6 +110,11 @@ API.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+API.interceptors.request.use((config) => {
+  config.url = normalizeRequestUrl(config.url);
+  return config;
+});
 
 // playground
 

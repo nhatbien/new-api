@@ -19,7 +19,7 @@ func CORS() gin.HandlerFunc {
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "New-Api-User", "X-Requested-With", "Cache-Control", "Pragma"}
 	config.ExposeHeaders = []string{"Content-Length"}
-	config.MaxAge = 12 * time.Hour
+	config.MaxAge = 5 * time.Minute
 	frontendBaseUrls := getFrontendBaseUrls()
 	if len(frontendBaseUrls) > 0 {
 		allowedOrigins := make(map[string]struct{}, len(frontendBaseUrls))
@@ -33,7 +33,11 @@ func CORS() gin.HandlerFunc {
 	} else {
 		config.AllowOriginFunc = isValidCorsOrigin
 	}
-	return cors.New(config)
+	corsHandler := cors.New(config)
+	return func(c *gin.Context) {
+		c.Writer.Header().Add("Vary", "Origin")
+		corsHandler(c)
+	}
 }
 
 func getFrontendBaseUrls() []string {

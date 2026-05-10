@@ -29,6 +29,11 @@ export function getApiUrl(path: string): string {
   return `${baseURL}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+function normalizeRequestUrl(url?: string): string | undefined {
+  if (!url || /^https?:\/\//i.test(url)) return url
+  return url.replace(/\/(\?|$)/, '$1')
+}
+
 // Create axios instance with default config
 export const api = axios.create({
   baseURL,
@@ -155,6 +160,7 @@ export function getCommonHeaders(): Record<string, string> {
 
 // Attach user ID header for all requests
 api.interceptors.request.use((config) => {
+  config.url = normalizeRequestUrl(config.url)
   const uid = getUserId()
   if (uid) {
     // Custom header for user identification
