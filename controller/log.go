@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -92,6 +93,23 @@ func GetLogByKey(c *gin.Context) {
 		"data":    logs,
 	})
 	return
+}
+
+func DeleteHistoryLogs(c *gin.Context) {
+	targetTimestamp, err := strconv.ParseInt(c.Query("target_timestamp"), 10, 64)
+	if err != nil || targetTimestamp <= 0 {
+		common.ApiErrorMsg(c, "invalid target timestamp")
+		return
+	}
+	deleted, err := model.DeleteOldLog(c.Request.Context(), targetTimestamp, 1000)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, gin.H{
+		"deleted": deleted,
+		"message": fmt.Sprintf("deleted %d history logs", deleted),
+	})
 }
 
 func GetLogsStat(c *gin.Context) {

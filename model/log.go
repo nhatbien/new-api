@@ -426,6 +426,69 @@ func GetUserLogs(userId int, logType int, startTimestamp int64, endTimestamp int
 	return logs, total, err
 }
 
+type logsStatResult struct {
+	QuotaNum int `gorm:"column:quota_num"`
+	TokenNum int `gorm:"column:token_num"`
+}
+
+func applyLogStatFilters(tx *gorm.DB, logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, channel int, group string) (*gorm.DB, error) {
+	if logType != LogTypeUnknown {
+		tx = tx.Where("type = ?", logType)
+	}
+	if startTimestamp != 0 {
+		tx = tx.Where("created_at >= ?", startTimestamp)
+	}
+	if endTimestamp != 0 {
+		tx = tx.Where("created_at <= ?", endTimestamp)
+	}
+	if modelName != "" {
+		modelNamePattern, err := sanitizeLikePattern(modelName)
+		if err != nil {
+			return nil, err
+		}
+		tx = tx.Where("model_name LIKE ? ESCAPE '!'", modelNamePattern)
+	}
+	if username != "" {
+		tx = tx.Where("username = ?", username)
+	}
+	if tokenName != "" {
+		tx = tx.Where("token_name = ?", tokenName)
+	}
+	if channel != 0 {
+		tx = tx.Where("channel_id = ?", channel)
+	}
+	if group != "" {
+		tx = tx.Where(logGroupCol+" = ?", group)
+	}
+	return tx, nil
+}
+
+func scanLogsStat(tx *gorm.DB) (quotaNum int, tokenNum int, err error) {
+	var stat logsStatResult
+	err = tx.Select("COALESCE(SUM(quota), 0) AS quota_num, COALESCE(SUM(prompt_tokens), 0) + COALESCE(SUM(completion_tokens), 0) AS token_num").Scan(&stat).Error
+	if err != nil {
+		common.SysError("failed to query log stat: " + err.Error())
+		return 0, 0, errors.New("failed to query statistics")
+	}
+	return stat.QuotaNum, stat.TokenNum, nil
+}
+
+func GetLogsStat(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, channel int, group string) (quotaNum int, tokenNum int, err error) {
+	tx, err := applyLogStatFilters(LOG_DB.Model(&Log{}), logType, startTimestamp, endTimestamp, modelName, username, tokenName, channel, group)
+	if err != nil {
+		return 0, 0, err
+	}
+	return scanLogsStat(tx)
+}
+
+func GetLogsSelfStat(userId int, logType int, startTimestamp int64, endTimestamp int64, modelName string, tokenName string, group string) (quotaNum int, tokenNum int, err error) {
+	tx, err := applyLogStatFilters(LOG_DB.Model(&Log{}).Where("user_id = ?", userId), logType, startTimestamp, endTimestamp, modelName, "", tokenName, 0, group)
+	if err != nil {
+		return 0, 0, err
+	}
+	return scanLogsStat(tx)
+}
+
 type Stat struct {
 	Quota int `json:"quota"`
 	Rpm   int `json:"rpm"`
