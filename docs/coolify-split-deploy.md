@@ -51,7 +51,7 @@ Create a second Coolify application from the same repository.
 Environment variables:
 
 ```env
-BACKEND_URL=https://api.example.com
+BACKEND_URL=http://backend-internal-host:3000
 VITE_REACT_APP_SERVER_URL=
 ```
 
@@ -59,6 +59,10 @@ VITE_REACT_APP_SERVER_URL=
 `dist` with Nginx. Keep `VITE_REACT_APP_SERVER_URL` empty so the browser calls
 same-origin paths such as `/api/status`. Nginx proxies `/api`, `/v1`, `/mj`, and
 `/pg` to `BACKEND_URL`, which avoids cross-origin session cookie issues.
+Use an internal Docker/Coolify service URL for `BACKEND_URL` when possible, for
+example `http://new-api:3000` in Docker Compose. Avoid pointing it at the public
+API domain from inside the frontend container if the host does not support
+hairpin NAT or blocks container-to-public-IP traffic.
 
 The Docker image also writes `/env.js` at container startup, so
 `VITE_REACT_APP_SERVER_URL` can be changed in Coolify environment variables
