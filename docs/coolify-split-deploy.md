@@ -56,11 +56,16 @@ Environment variables:
 VITE_REACT_APP_SERVER_URL=https://api.example.com
 ```
 
-`Dockerfile.frontend` builds `web/default` with Bun, serves the generated `dist`
-with Nginx, and the browser calls the backend directly via
-`VITE_REACT_APP_SERVER_URL`. The Docker image also writes `/env.js` at container
-startup, so this value can be changed in Coolify environment variables without
-rebuilding the frontend image.
+`Dockerfile.frontend` builds `web/default` with Bun and serves the generated
+`dist` with Nginx. At runtime, Nginx proxies `/api`, `/v1`, `/mj`, and `/pg` to
+`VITE_REACT_APP_SERVER_URL`, while the browser calls those paths on the frontend
+domain. This avoids browser CORS for the dashboard.
+
+If you intentionally want the browser to call a backend URL directly, set:
+
+```env
+VITE_REACT_APP_BROWSER_SERVER_URL=https://api.example.com
+```
 
 ### Option B: Coolify static site
 
