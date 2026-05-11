@@ -15,18 +15,11 @@ declare global {
 // Axios Instance Configuration
 // ============================================================================
 
-const runtimeBaseUrl = Object.prototype.hasOwnProperty.call(
-  window.__APP_CONFIG__ || {},
-  'VITE_REACT_APP_SERVER_URL'
-)
-  ? window.__APP_CONFIG__?.VITE_REACT_APP_SERVER_URL
-  : undefined
-
-// Base URL: empty string for same-origin API requests. Runtime config wins even
-// when it intentionally sets an empty string to override a build-time URL.
+// Base URL: empty string for same-origin API requests, or set
+// VITE_REACT_APP_SERVER_URL to call a separated backend directly.
 export const baseURL = (
-  runtimeBaseUrl ??
-  import.meta.env.VITE_REACT_APP_SERVER_URL ??
+  window.__APP_CONFIG__?.VITE_REACT_APP_SERVER_URL ||
+  import.meta.env.VITE_REACT_APP_SERVER_URL ||
   ''
 ).replace(/\/$/, '')
 
