@@ -16,9 +16,6 @@ RUN VITE_REACT_APP_VERSION=$(cat VERSION) bun run build
 
 FROM nginx:1.27-alpine
 
-ARG BACKEND_BASE_URL=http://new-api:3000
-ENV BACKEND_BASE_URL=${BACKEND_BASE_URL}
-
 COPY deploy/nginx/frontend.conf.template /etc/nginx/templates/default.conf.template
 COPY deploy/nginx/docker-entrypoint.d/40-frontend-env.sh /docker-entrypoint.d/40-frontend-env.sh
 COPY --from=builder /build/dist /usr/share/nginx/html
