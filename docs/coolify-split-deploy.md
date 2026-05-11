@@ -51,14 +51,15 @@ Create a second Coolify application from the same repository.
 Environment variables:
 
 ```env
-VITE_REACT_APP_SERVER_URL=https://api.example.com
+BACKEND_BASE_URL=https://api.example.com
+VITE_REACT_APP_SERVER_URL=
 ```
 
 `Dockerfile.frontend` builds `web/default` with Bun, serves the generated `dist`
-with Nginx, and the browser calls the backend directly via
-`VITE_REACT_APP_SERVER_URL`. The Docker image also writes `/env.js` at container
-startup, so this value can be changed in Coolify environment variables without
-rebuilding the frontend image.
+with Nginx, and proxies `/api`, `/v1`, `/mj`, and `/pg` to `BACKEND_BASE_URL`.
+Leaving `VITE_REACT_APP_SERVER_URL` empty makes the browser call same-origin API
+paths, which avoids browser CORS issues. Set `VITE_REACT_APP_SERVER_URL` only if
+you intentionally want direct cross-domain browser requests.
 
 ### Option B: Coolify static site
 
