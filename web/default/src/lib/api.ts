@@ -17,10 +17,17 @@ declare global {
 
 // Base URL: empty string for same-origin API requests, or set
 // VITE_REACT_APP_SERVER_URL to call a separated backend directly.
+const runtimeServerURL =
+  window.__APP_CONFIG__ &&
+  Object.prototype.hasOwnProperty.call(
+    window.__APP_CONFIG__,
+    'VITE_REACT_APP_SERVER_URL'
+  )
+    ? window.__APP_CONFIG__.VITE_REACT_APP_SERVER_URL
+    : undefined
+
 export const baseURL = (
-  window.__APP_CONFIG__?.VITE_REACT_APP_SERVER_URL ||
-  import.meta.env.VITE_REACT_APP_SERVER_URL ||
-  ''
+  runtimeServerURL ?? import.meta.env.VITE_REACT_APP_SERVER_URL ?? ''
 ).replace(/\/$/, '')
 
 export function getApiUrl(path: string): string {
