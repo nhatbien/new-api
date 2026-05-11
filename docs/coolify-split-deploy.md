@@ -35,10 +35,8 @@ Notes:
 - `Dockerfile.backend` intentionally skips `web/default` and `web/classic` builds.
 - The Go binary still requires embedded frontend paths at compile time, so the
   Dockerfile creates small placeholder `dist/index.html` files.
-- If the backend is configured as a master node, `FRONTEND_BASE_URL` is ignored by
-  the current router logic and the backend will serve the embedded placeholder
-  page for frontend routes. For split deployment, do not rely on the backend root
-  route; route users to the frontend domain instead.
+- When multiple frontend domains are configured, backend fallback redirects use
+  the first `FRONTEND_BASE_URL` value. CORS allows all configured values.
 
 ## Frontend app
 

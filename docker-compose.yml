@@ -4,11 +4,16 @@
 #   1. docker-compose up -d
 #   2. Access at http://localhost:3000
 #
-# Using MySQL instead of PostgreSQL:
-#   1. Comment out the postgres service and SQL_DSN line 15
-#   2. Uncomment the mysql service and SQL_DSN line 16
-#   3. Uncomment mysql in depends_on (line 28)
-#   4. Uncomment mysql_data in volumes section (line 64)
+# External services:
+#   By default, this compose file uses SQL_DSN and REDIS_CONN_STRING from .env
+#   so you can point to existing PostgreSQL/MySQL and Redis instances without
+#   creating database/cache containers.
+#   To run the bundled PostgreSQL container instead:
+#     docker compose --profile local-postgres up -d
+#   and set SQL_DSN=postgresql://root:123456@postgres:5432/new-api in .env.
+#   To run the bundled Redis container instead:
+#     docker compose --profile local-redis up -d
+#   and set REDIS_CONN_STRING=redis://:123456@redis:6379 in .env.
 #
 # ⚠️  IMPORTANT: Change all default passwords before deploying to production!
 
@@ -26,9 +31,9 @@ services:
       - ./data:/data
       - ./logs:/app/logs
     environment:
-      - SQL_DSN=postgresql://root:123456@postgres:5432/new-api # ⚠️ IMPORTANT: Change the password in production!
+      - SQL_DSN=${SQL_DSN:?Set SQL_DSN in .env}
 #      - SQL_DSN=root:123456@tcp(mysql:3306)/new-api  # Point to the mysql service, uncomment if using MySQL
-      - REDIS_CONN_STRING=redis://:123456@redis:6379 # ⚠️ IMPORTANT: Change the password in production!
+      - REDIS_CONN_STRING=${REDIS_CONN_STRING:?Set REDIS_CONN_STRING in .env}
       - TZ=Asia/Shanghai
       - ERROR_LOG_ENABLED=true # 是否启用错误日志记录 (Whether to enable error log recording)
       - BATCH_UPDATE_ENABLED=true  # 是否启用批量更新 (Whether to enable batch update)
@@ -39,10 +44,7 @@ services:
 #      - GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX  # Google Analytics 的测量 ID (Google Analytics Measurement ID)
 #      - UMAMI_WEBSITE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  # Umami 网站 ID (Umami Website ID)
 #      - UMAMI_SCRIPT_URL=https://analytics.umami.is/script.js  # Umami 脚本 URL，默认为官方地址 (Umami Script URL, defaults to official URL)
-
-    depends_on:
-      - redis
-      - postgres
+#    depends_on:
 #      - mysql  # Uncomment if using MySQL
     networks:
       - new-api-network
@@ -55,6 +57,8 @@ services:
   redis:
     image: redis:latest
     container_name: redis
+    profiles:
+      - local-redis
     restart: always
     command: ["redis-server", "--requirepass", "123456"]  # ⚠️ IMPORTANT: Change this password in production!
     networks:
@@ -63,6 +67,8 @@ services:
   postgres:
     image: postgres:15
     container_name: postgres
+    profiles:
+      - local-postgres
     restart: always
     environment:
       POSTGRES_USER: root

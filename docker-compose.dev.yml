@@ -5,6 +5,17 @@
 #   2. cd web && bun install && bun run dev
 #   3. Open http://localhost:3001 (Rsbuild dev server, API auto-proxied to :3000)
 #
+# External services:
+#   Uses SQL_DSN and REDIS_CONN_STRING from .env by default, so it can connect
+#   to your existing PostgreSQL/MySQL and Redis instances without creating
+#   database/cache containers.
+#   To run the bundled PostgreSQL container instead:
+#     docker compose -f docker-compose.dev.yml --profile local-postgres up -d
+#   and set SQL_DSN=postgresql://root:123456@postgres:5432/new-api in .env.
+#   To run the bundled Redis container instead:
+#     docker compose -f docker-compose.dev.yml --profile local-redis up -d
+#   and set REDIS_CONN_STRING=redis://redis in .env.
+#
 # Rebuild backend after Go code changes:
 #   docker compose -f docker-compose.dev.yml up -d --build new-api
 #
@@ -27,21 +38,18 @@ services:
     volumes:
       - dev_data:/data
     environment:
-      - SQL_DSN=postgresql://root:123456@postgres:5432/new-api
-      - REDIS_CONN_STRING=redis://redis
+      - SQL_DSN=${SQL_DSN:?Set SQL_DSN in .env}
+      - REDIS_CONN_STRING=${REDIS_CONN_STRING:?Set REDIS_CONN_STRING in .env}
       - TZ=Asia/Shanghai
       - BATCH_UPDATE_ENABLED=true
-    depends_on:
-      redis:
-        condition: service_started
-      postgres:
-        condition: service_healthy
     networks:
       - dev-network
 
   redis:
     image: redis:7-alpine
     container_name: new-api-dev-redis
+    profiles:
+      - local-redis
     restart: unless-stopped
     networks:
       - dev-network
@@ -49,6 +57,8 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: new-api-dev-pg
+    profiles:
+      - local-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: root
