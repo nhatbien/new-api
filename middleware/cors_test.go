@@ -35,6 +35,53 @@ func TestCORSAddsHeadersForConfiguredFrontendOrigin(t *testing.T) {
 	}
 }
 
+func TestCORSAddsHeadersForSameSiteFrontendOrigin(t *testing.T) {
+	t.Setenv("FRONTEND_BASE_URL", "https://console.example.com")
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	router.Use(CORS())
+	router.GET("/api/group", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"success": true})
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "https://api.apigiare.vn/api/group", nil)
+	req.Host = "api.apigiare.vn"
+	req.Header.Set("Origin", "https://apigiare.vn")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, req)
+
+	if got := recorder.Header().Get("Access-Control-Allow-Origin"); got != "https://apigiare.vn" {
+		t.Fatalf("Access-Control-Allow-Origin = %q, want %q", got, "https://apigiare.vn")
+	}
+}
+
+func TestCORSRejectsPreflightForUnrelatedOrigin(t *testing.T) {
+	t.Setenv("FRONTEND_BASE_URL", "https://console.example.com")
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	router.Use(CORS())
+	router.GET("/api/group", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"success": true})
+	})
+
+	req := httptest.NewRequest(http.MethodOptions, "https://api.apigiare.vn/api/group", nil)
+	req.Host = "api.apigiare.vn"
+	req.Header.Set("Origin", "https://other.example.net")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusForbidden)
+	}
+	if got := recorder.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("Access-Control-Allow-Origin = %q, want empty", got)
+	}
+}
+
 func TestAddHeaderValueDoesNotDuplicateCommaSeparatedValues(t *testing.T) {
 	header := http.Header{}
 	header.Add("Vary", "Accept-Encoding, Origin")

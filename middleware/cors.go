@@ -6,21 +6,16 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/QuantumNous/new-api/common"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/net/publicsuffix"
 )
 
 func CORS() gin.HandlerFunc {
-	config := cors.DefaultConfig()
-	config.AllowCredentials = true
-	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "New-Api-User", "X-Requested-With", "Cache-Control", "Pragma"}
-	config.ExposeHeaders = []string{"Content-Length"}
-	config.MaxAge = 5 * time.Minute
+	allowMethods := []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
+	allowHeaders := []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "New-Api-User", "X-Requested-With", "Cache-Control", "Pragma"}
+	exposeHeaders := []string{"Content-Length"}
 	frontendBaseUrls := getFrontendBaseUrls()
 	allowOrigin := isValidCorsOrigin
 	if len(frontendBaseUrls) > 0 {
@@ -33,20 +28,26 @@ func CORS() gin.HandlerFunc {
 			return ok
 		}
 	}
-	config.AllowOriginFunc = allowOrigin
-	corsHandler := cors.New(config)
 	return func(c *gin.Context) {
 		header := c.Writer.Header()
 		addHeaderValue(header, "Vary", "Origin")
 		header.Set("Cache-Control", "no-store")
-		if origin := c.Request.Header.Get("Origin"); origin != "" && allowOrigin(origin) {
+		origin := c.Request.Header.Get("Origin")
+		if origin != "" && (allowOrigin(origin) || isSameSiteCorsOrigin(origin, c.Request.Host)) {
 			header.Set("Access-Control-Allow-Origin", origin)
 			header.Set("Access-Control-Allow-Credentials", "true")
-			header.Set("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ","))
-			header.Set("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ","))
-			header.Set("Access-Control-Expose-Headers", strings.Join(config.ExposeHeaders, ","))
+			header.Set("Access-Control-Allow-Methods", strings.Join(allowMethods, ","))
+			header.Set("Access-Control-Allow-Headers", strings.Join(allowHeaders, ","))
+			header.Set("Access-Control-Expose-Headers", strings.Join(exposeHeaders, ","))
+			if c.Request.Method == http.MethodOptions {
+				c.AbortWithStatus(http.StatusNoContent)
+				return
+			}
+		} else if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
 		}
-		corsHandler(c)
+		c.Next()
 	}
 }
 
@@ -143,6 +144,30 @@ func getCorsOriginDomainVariants(origin string) []string {
 	}
 
 	return []string{rootVariant.String()}
+}
+
+func isSameSiteCorsOrigin(origin string, requestHost string) bool {
+	parsedOrigin, err := url.Parse(origin)
+	if err != nil || parsedOrigin.Host == "" || requestHost == "" {
+		return false
+	}
+
+	originDomain := getRegistrableDomain(parsedOrigin.Hostname())
+	requestDomain := getRegistrableDomain(strings.Split(requestHost, ":")[0])
+
+	return originDomain != "" && originDomain == requestDomain
+}
+
+func getRegistrableDomain(hostname string) string {
+	hostname = strings.ToLower(strings.TrimSpace(hostname))
+	if hostname == "" || strings.Contains(hostname, ":") || hostname == "localhost" {
+		return ""
+	}
+	registrableDomain, err := publicsuffix.EffectiveTLDPlusOne(hostname)
+	if err != nil {
+		return ""
+	}
+	return registrableDomain
 }
 
 func PoweredBy() gin.HandlerFunc {
