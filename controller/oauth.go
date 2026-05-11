@@ -172,9 +172,14 @@ func handleOAuthBind(c *gin.Context, provider oauth.Provider) {
 		return
 	}
 
-	// Handle binding based on provider type
-	if genericProvider, ok := provider.(*oauth.GenericOAuthProvider); ok {
-		// Custom provider: use user_oauth_bindings table
+	// Handle binding based on provider storage.
+	if bindingProvider, ok := provider.(oauth.BindingProvider); ok {
+		err = model.UpdateUserOAuthBinding(user.Id, bindingProvider.GetBindingProviderId(), oauthUser.ProviderUserID)
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	} else if genericProvider, ok := provider.(*oauth.GenericOAuthProvider); ok {
 		err = model.UpdateUserOAuthBinding(user.Id, genericProvider.GetProviderId(), oauthUser.ProviderUserID)
 		if err != nil {
 			common.ApiError(c, err)
@@ -270,8 +275,29 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 	}
 
 	// Use transaction to ensure user creation and OAuth binding are atomic
-	if genericProvider, ok := provider.(*oauth.GenericOAuthProvider); ok {
-		// Custom provider: create user and binding in a transaction
+	if bindingProvider, ok := provider.(oauth.BindingProvider); ok {
+		err := model.DB.Transaction(func(tx *gorm.DB) error {
+			if err := user.InsertWithTx(tx, inviterId); err != nil {
+				return err
+			}
+
+			binding := &model.UserOAuthBinding{
+				UserId:         user.Id,
+				ProviderId:     bindingProvider.GetBindingProviderId(),
+				ProviderUserId: oauthUser.ProviderUserID,
+			}
+			if err := model.CreateUserOAuthBindingWithTx(tx, binding); err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		user.FinalizeOAuthUserCreation(inviterId)
+	} else if genericProvider, ok := provider.(*oauth.GenericOAuthProvider); ok {
 		err := model.DB.Transaction(func(tx *gorm.DB) error {
 			// Create user
 			if err := user.InsertWithTx(tx, inviterId); err != nil {

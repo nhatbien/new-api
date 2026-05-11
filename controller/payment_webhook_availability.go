@@ -85,6 +85,13 @@ func isWaffoPancakeWebhookEnabled() bool {
 	return isWaffoPancakeTopUpEnabled()
 }
 
+func isSepayTopUpEnabled() bool {
+	return setting.SepayEnabled &&
+		strings.TrimSpace(setting.SepayBankCode) != "" &&
+		strings.TrimSpace(setting.SepayAccountNumber) != "" &&
+		strings.TrimSpace(setting.SepayAccountName) != ""
+}
+
 func isEpayTopUpEnabled() bool {
 	return isEpayWebhookConfigured() && len(operation_setting.PayMethods) > 0
 }

@@ -54,9 +54,10 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/oauth/:provider", middleware.CriticalRateLimit(), controller.HandleOAuth)
 		apiRouter.GET("/ratio_config", middleware.CriticalRateLimit(), controller.GetRatioConfig)
 
-		apiRouter.POST("/stripe/webhook", controller.StripeWebhook)
-		apiRouter.POST("/creem/webhook", controller.CreemWebhook)
-		apiRouter.POST("/waffo/webhook", controller.WaffoWebhook)
+		apiRouter.POST("/stripe/webhook", middleware.WebhookLog("stripe"), controller.StripeWebhook)
+		apiRouter.POST("/creem/webhook", middleware.WebhookLog("creem"), controller.CreemWebhook)
+		apiRouter.POST("/waffo/webhook", middleware.WebhookLog("waffo"), controller.WaffoWebhook)
+		apiRouter.POST("/sepay/webhook", middleware.WebhookLog("sepay"), controller.SepayWebhook)
 		//apiRouter.POST("/waffo-pancake/webhook", controller.WaffoPancakeWebhook)
 
 		// Universal secure verification routes
@@ -71,8 +72,8 @@ func SetApiRouter(router *gin.Engine) {
 			userRoute.POST("/passkey/login/finish", middleware.CriticalRateLimit(), controller.PasskeyLoginFinish)
 			//userRoute.POST("/tokenlog", middleware.CriticalRateLimit(), controller.TokenLog)
 			userRoute.GET("/logout", controller.Logout)
-			userRoute.POST("/epay/notify", controller.EpayNotify)
-			userRoute.GET("/epay/notify", controller.EpayNotify)
+			userRoute.POST("/epay/notify", middleware.WebhookLog("epay"), controller.EpayNotify)
+			userRoute.GET("/epay/notify", middleware.WebhookLog("epay"), controller.EpayNotify)
 			userRoute.GET("/groups", controller.GetUserGroups)
 
 			selfRoute := userRoute.Group("")
@@ -103,6 +104,8 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.POST("/waffo/pay", middleware.CriticalRateLimit(), controller.RequestWaffoPay)
 				//selfRoute.POST("/waffo-pancake/amount", controller.RequestWaffoPancakeAmount)
 				//selfRoute.POST("/waffo-pancake/pay", middleware.CriticalRateLimit(), controller.RequestWaffoPancakePay)
+				selfRoute.POST("/sepay/amount", controller.RequestSepayAmount)
+				selfRoute.POST("/sepay/pay", middleware.CriticalRateLimit(), controller.RequestSepayPay)
 				selfRoute.POST("/aff_transfer", controller.TransferAffQuota)
 				selfRoute.PUT("/setting", controller.UpdateUserSetting)
 
@@ -178,8 +181,8 @@ func SetApiRouter(router *gin.Engine) {
 		}
 
 		// Subscription payment callbacks (no auth)
-		apiRouter.POST("/subscription/epay/notify", controller.SubscriptionEpayNotify)
-		apiRouter.GET("/subscription/epay/notify", controller.SubscriptionEpayNotify)
+		apiRouter.POST("/subscription/epay/notify", middleware.WebhookLog("subscription_epay"), controller.SubscriptionEpayNotify)
+		apiRouter.GET("/subscription/epay/notify", middleware.WebhookLog("subscription_epay"), controller.SubscriptionEpayNotify)
 		apiRouter.GET("/subscription/epay/return", controller.SubscriptionEpayReturn)
 		apiRouter.POST("/subscription/epay/return", controller.SubscriptionEpayReturn)
 		optionRoute := apiRouter.Group("/option")
@@ -193,6 +196,15 @@ func SetApiRouter(router *gin.Engine) {
 			optionRoute.DELETE("/channel_affinity_cache", controller.ClearChannelAffinityCache)
 			optionRoute.POST("/rest_model_ratio", controller.ResetModelRatio)
 			optionRoute.POST("/migrate_console_setting", controller.MigrateConsoleSetting) // 用于迁移检测的旧键，下个版本会删除
+		}
+
+		webhookLogRoute := apiRouter.Group("/webhook_logs")
+		webhookLogRoute.Use(middleware.RootAuth())
+		{
+			webhookLogRoute.GET("", controller.GetWebhookLogs)
+			webhookLogRoute.GET("/", controller.GetWebhookLogs)
+			webhookLogRoute.DELETE("", controller.DeleteWebhookLogs)
+			webhookLogRoute.DELETE("/", controller.DeleteWebhookLogs)
 		}
 
 		// Custom OAuth provider management (root only)

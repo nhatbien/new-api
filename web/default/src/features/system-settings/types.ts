@@ -53,6 +53,9 @@ export type AuthSettings = {
   GitHubOAuthEnabled: boolean
   GitHubClientId: string
   GitHubClientSecret: string
+  'google.enabled': boolean
+  'google.client_id': string
+  'google.client_secret': string
   'discord.enabled': boolean
   'discord.client_id': string
   'discord.client_secret': string
@@ -234,6 +237,15 @@ export type BillingSettings = {
   WaffoPancakeCurrency: string
   WaffoPancakeUnitPrice: number
   WaffoPancakeMinTopUp: number
+  SepayEnabled: boolean
+  SepayBankCode: string
+  SepayAccountNumber: string
+  SepayAccountName: string
+  SepayQrTemplate: string
+  SepayContentPrefix: string
+  SepayWebhookSecret: string
+  SepayUnitPrice: number
+  SepayMinTopUp: number
   'checkin_setting.enabled': boolean
   'checkin_setting.min_quota': number
   'checkin_setting.max_quota': number

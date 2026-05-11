@@ -28,6 +28,19 @@ export function buildDiscordOAuthUrl(clientId: string, state: string): string {
 }
 
 /**
+ * Build Google OAuth URL
+ */
+export function buildGoogleOAuthUrl(clientId: string, state: string): string {
+  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+  url.searchParams.set('client_id', clientId)
+  url.searchParams.set('redirect_uri', `${window.location.origin}/oauth/google`)
+  url.searchParams.set('response_type', 'code')
+  url.searchParams.set('scope', 'openid profile email')
+  url.searchParams.set('state', state)
+  return url.toString()
+}
+
+/**
  * Build OIDC OAuth URL
  */
 export function buildOIDCOAuthUrl(

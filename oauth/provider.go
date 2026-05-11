@@ -34,3 +34,9 @@ type Provider interface {
 	// GetProviderPrefix returns the prefix for auto-generated usernames (e.g., "github_")
 	GetProviderPrefix() string
 }
+
+// BindingProvider stores provider links in user_oauth_bindings instead of
+// dedicated columns on the users table.
+type BindingProvider interface {
+	GetBindingProviderId() int
+}

@@ -6,6 +6,7 @@ import { PaymentSettingsSection } from '../integrations/payment-settings-section
 import { RatioSettingsCard } from '../models/ratio-settings-card'
 import type { BillingSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
+import { WebhookLogsSection } from './webhook-logs-section'
 
 const getModelDefaults = (settings: BillingSettings) => ({
   ModelPrice: settings.ModelPrice,
@@ -169,8 +170,25 @@ const BILLING_SECTIONS = [
           WaffoPancakeUnitPrice: settings.WaffoPancakeUnitPrice ?? 1,
           WaffoPancakeMinTopUp: settings.WaffoPancakeMinTopUp ?? 1,
         }}
+        sepayDefaultValues={{
+          SepayEnabled: settings.SepayEnabled ?? false,
+          SepayBankCode: settings.SepayBankCode ?? '',
+          SepayAccountNumber: settings.SepayAccountNumber ?? '',
+          SepayAccountName: settings.SepayAccountName ?? '',
+          SepayQrTemplate: settings.SepayQrTemplate ?? 'compact2',
+          SepayContentPrefix: settings.SepayContentPrefix ?? 'NAP',
+          SepayWebhookSecret: settings.SepayWebhookSecret ?? '',
+          SepayUnitPrice: settings.SepayUnitPrice ?? 1,
+          SepayMinTopUp: settings.SepayMinTopUp ?? 1,
+        }}
       />
     ),
+  },
+  {
+    id: 'log_webhook',
+    titleKey: 'Webhook Logs',
+    descriptionKey: 'View raw payment provider webhook requests',
+    build: () => <WebhookLogsSection />,
   },
   {
     id: 'checkin',

@@ -449,6 +449,17 @@ func buildUserOAuthBindingsResponse(userId int) ([]UserOAuthBindingResponse, err
 
 	response := make([]UserOAuthBindingResponse, 0, len(bindings))
 	for _, binding := range bindings {
+		if binding.ProviderId == model.BuiltInOAuthProviderGoogle {
+			response = append(response, UserOAuthBindingResponse{
+				ProviderId:     binding.ProviderId,
+				ProviderName:   "Google",
+				ProviderSlug:   "google",
+				ProviderIcon:   "Google",
+				ProviderUserId: binding.ProviderUserId,
+			})
+			continue
+		}
+
 		provider, err := model.GetCustomOAuthProviderById(binding.ProviderId)
 		if err != nil {
 			continue

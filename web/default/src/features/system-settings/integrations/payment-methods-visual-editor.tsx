@@ -54,6 +54,14 @@ const PAYMENT_TEMPLATES = [
     },
   },
   {
+    name: 'SEPAY QR',
+    template: {
+      color: '#0EA5E9',
+      name: 'SEPAY QR',
+      type: 'sepay',
+    },
+  },
+  {
     name: 'Custom',
     template: {
       color: 'black',

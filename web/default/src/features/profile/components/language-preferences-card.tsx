@@ -17,21 +17,21 @@ import { parseUserSettings } from '../lib'
 import type { UserProfile } from '../types'
 
 const LANGUAGE_OPTIONS = [
+  { value: 'vi', label: 'Tiếng Việt' },
   { value: 'zh', label: '简体中文' },
   { value: 'en', label: 'English' },
   { value: 'fr', label: 'Français' },
   { value: 'ru', label: 'Русский' },
   { value: 'ja', label: '日本語' },
-  { value: 'vi', label: 'Tiếng Việt' },
 ] as const
 
 function normalizeLanguage(value?: string | null): string {
-  if (!value) return 'en'
+  if (!value) return 'vi'
   const normalized = value.trim().replace(/_/g, '-').toLowerCase()
   if (normalized.startsWith('zh')) return 'zh'
   return LANGUAGE_OPTIONS.some((lang) => lang.value === normalized)
     ? normalized
-    : 'en'
+    : 'vi'
 }
 
 type LanguagePreferencesCardProps = {

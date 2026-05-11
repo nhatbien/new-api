@@ -118,6 +118,15 @@ func InitOptionMap() {
 	common.OptionMap["WaffoPancakeCurrency"] = setting.WaffoPancakeCurrency
 	common.OptionMap["WaffoPancakeUnitPrice"] = strconv.FormatFloat(setting.WaffoPancakeUnitPrice, 'f', -1, 64)
 	common.OptionMap["WaffoPancakeMinTopUp"] = strconv.Itoa(setting.WaffoPancakeMinTopUp)
+	common.OptionMap["SepayEnabled"] = strconv.FormatBool(setting.SepayEnabled)
+	common.OptionMap["SepayBankCode"] = setting.SepayBankCode
+	common.OptionMap["SepayAccountNumber"] = setting.SepayAccountNumber
+	common.OptionMap["SepayAccountName"] = setting.SepayAccountName
+	common.OptionMap["SepayQrTemplate"] = setting.SepayQrTemplate
+	common.OptionMap["SepayContentPrefix"] = setting.SepayContentPrefix
+	common.OptionMap["SepayWebhookSecret"] = setting.SepayWebhookSecret
+	common.OptionMap["SepayUnitPrice"] = strconv.FormatFloat(setting.SepayUnitPrice, 'f', -1, 64)
+	common.OptionMap["SepayMinTopUp"] = strconv.Itoa(setting.SepayMinTopUp)
 	common.OptionMap["TopupGroupRatio"] = common.TopupGroupRatio2JSONString()
 	common.OptionMap["Chats"] = setting.Chats2JsonString()
 	common.OptionMap["AutoGroups"] = setting.AutoGroups2JsonString()
@@ -443,6 +452,24 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.WaffoPancakeUnitPrice, _ = strconv.ParseFloat(value, 64)
 	case "WaffoPancakeMinTopUp":
 		setting.WaffoPancakeMinTopUp, _ = strconv.Atoi(value)
+	case "SepayEnabled":
+		setting.SepayEnabled = value == "true"
+	case "SepayBankCode":
+		setting.SepayBankCode = value
+	case "SepayAccountNumber":
+		setting.SepayAccountNumber = value
+	case "SepayAccountName":
+		setting.SepayAccountName = value
+	case "SepayQrTemplate":
+		setting.SepayQrTemplate = value
+	case "SepayContentPrefix":
+		setting.SepayContentPrefix = value
+	case "SepayWebhookSecret":
+		setting.SepayWebhookSecret = value
+	case "SepayUnitPrice":
+		setting.SepayUnitPrice, _ = strconv.ParseFloat(value, 64)
+	case "SepayMinTopUp":
+		setting.SepayMinTopUp, _ = strconv.Atoi(value)
 	case "TopupGroupRatio":
 		err = common.UpdateTopupGroupRatioByJSONString(value)
 	case "GitHubClientId":

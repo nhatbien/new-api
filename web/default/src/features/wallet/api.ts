@@ -20,6 +20,7 @@ import type {
   WaffoPaymentResponse,
   WaffoPancakePaymentRequest,
   WaffoPancakePaymentResponse,
+  SepayPaymentResponse,
 } from './types'
 
 // ============================================================================
@@ -133,6 +134,30 @@ export async function calculateWaffoPancakeAmount(
   request: AmountRequest
 ): Promise<AmountResponse> {
   const res = await api.post('/api/user/waffo-pancake/amount', request, {
+    skipBusinessError: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
+ * Calculate payment amount for SEPAY VietQR payment
+ */
+export async function calculateSepayAmount(
+  request: AmountRequest
+): Promise<AmountResponse> {
+  const res = await api.post('/api/user/sepay/amount', request, {
+    skipBusinessError: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
+ * Request SEPAY VietQR payment
+ */
+export async function requestSepayPayment(
+  request: PaymentRequest
+): Promise<SepayPaymentResponse> {
+  const res = await api.post('/api/user/sepay/pay', request, {
     skipBusinessError: true,
   } as Record<string, unknown>)
   return res.data

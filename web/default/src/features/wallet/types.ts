@@ -36,6 +36,13 @@ export type WaffoPancakePaymentResponse = ApiResponse<
     }
   | string
 >
+export type SepayPaymentResponse = ApiResponse<{
+  trade_no: string
+  payment_url: string
+  qr_url: string
+  amount: number
+  transfer_content: string
+}>
 
 /**
  * Creem product configuration
@@ -127,6 +134,10 @@ export interface TopupInfo {
   enable_waffo_pancake_topup?: boolean
   /** Minimum topup amount for Waffo Pancake */
   waffo_pancake_min_topup?: number
+  /** Whether SEPAY VietQR topup is enabled */
+  enable_sepay_topup?: boolean
+  /** Minimum topup amount for SEPAY */
+  sepay_min_topup?: number
 }
 
 /**
