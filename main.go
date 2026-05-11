@@ -171,6 +171,9 @@ func main() {
 			},
 		})
 	}))
+	// Apply CORS globally so browser clients keep CORS headers even when
+	// auth, rate limiting, or fallback routes short-circuit the request.
+	server.Use(middleware.CORS())
 	// This will cause SSE not to work!!!
 	//server.Use(gzip.Gzip(gzip.DefaultCompression))
 	server.Use(middleware.RequestId())
