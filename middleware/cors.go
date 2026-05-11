@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/http"
 	"net/url"
 	"os"
 	"sort"
@@ -36,7 +37,7 @@ func CORS() gin.HandlerFunc {
 	corsHandler := cors.New(config)
 	return func(c *gin.Context) {
 		header := c.Writer.Header()
-		header.Add("Vary", "Origin")
+		addHeaderValue(header, "Vary", "Origin")
 		header.Set("Cache-Control", "no-store")
 		if origin := c.Request.Header.Get("Origin"); origin != "" && allowOrigin(origin) {
 			header.Set("Access-Control-Allow-Origin", origin)
@@ -47,6 +48,17 @@ func CORS() gin.HandlerFunc {
 		}
 		corsHandler(c)
 	}
+}
+
+func addHeaderValue(header http.Header, key string, value string) {
+	for _, values := range header.Values(key) {
+		for _, existing := range strings.Split(values, ",") {
+			if strings.EqualFold(strings.TrimSpace(existing), value) {
+				return
+			}
+		}
+	}
+	header.Add(key, value)
 }
 
 func getFrontendBaseUrls() []string {

@@ -34,3 +34,17 @@ func TestCORSAddsHeadersForConfiguredFrontendOrigin(t *testing.T) {
 		t.Fatalf("Cache-Control = %q, want no-store", got)
 	}
 }
+
+func TestAddHeaderValueDoesNotDuplicateCommaSeparatedValues(t *testing.T) {
+	header := http.Header{}
+	header.Add("Vary", "Accept-Encoding, Origin")
+
+	addHeaderValue(header, "Vary", "Origin")
+
+	if got, want := len(header.Values("Vary")), 1; got != want {
+		t.Fatalf("Vary value count = %d, want %d", got, want)
+	}
+	if got := header.Get("Vary"); got != "Accept-Encoding, Origin" {
+		t.Fatalf("Vary = %q, want %q", got, "Accept-Encoding, Origin")
+	}
+}
