@@ -29,18 +29,23 @@ export function formatQuotaShort(quota: number): string {
 }
 
 /**
- * Format currency amount that is already in local currency.
+ * Format currency amount with an optional symbol prefix.
  * This is used for payment amounts that have been calculated via priceRatio.
  */
-export function formatCurrency(amount: number | string): string {
+export function formatCurrency(
+  amount: number | string,
+  symbol: string = ''
+): string {
   const numeric =
     typeof amount === 'number' ? amount : Number.parseFloat(String(amount))
   if (!Number.isFinite(numeric)) return '-'
 
-  return new Intl.NumberFormat(undefined, {
+  const formatted = new Intl.NumberFormat(undefined, {
     minimumFractionDigits: 0,
     maximumFractionDigits: Math.abs(numeric) >= 1 ? 2 : 4,
   }).format(numeric)
+
+  return symbol ? `${symbol}${formatted}` : formatted
 }
 
 /**
@@ -52,6 +57,34 @@ export function getDiscountLabel(discount: number): string {
   }
   const off = Math.round((1 - discount) * 100)
   return `${off}% OFF`
+}
+
+export function getAmountDiscount(
+  amount: number,
+  discounts?: Record<number, number>
+): number {
+  if (!discounts) return DEFAULT_DISCOUNT_RATE
+
+  let bestThreshold = -1
+  let bestDiscount = DEFAULT_DISCOUNT_RATE
+
+  Object.entries(discounts).forEach(([threshold, discount]) => {
+    const thresholdValue = Number(threshold)
+    if (
+      Number.isFinite(thresholdValue) &&
+      thresholdValue <= amount &&
+      thresholdValue > bestThreshold
+    ) {
+      bestThreshold = thresholdValue
+      const discountValue = Number(discount)
+      bestDiscount =
+        Number.isFinite(discountValue) && discountValue > 0
+          ? discountValue
+          : DEFAULT_DISCOUNT_RATE
+    }
+  })
+
+  return bestDiscount
 }
 
 /**

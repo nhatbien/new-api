@@ -222,6 +222,7 @@ export const STATIC_I18N_KEYS = [
   'Custom (seconds)',
   'No Reset',
   'Daily',
+  'Daily Quota',
   'Weekly',
   'Monthly',
 

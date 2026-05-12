@@ -78,6 +78,11 @@ export interface SubscriptionPayResponse {
   data?: {
     pay_link?: string
     checkout_url?: string
+    trade_no?: string
+    payment_url?: string
+    qr_url?: string
+    amount?: number
+    transfer_content?: string
   }
   url?: string
 }

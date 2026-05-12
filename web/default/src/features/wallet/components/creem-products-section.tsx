@@ -37,7 +37,7 @@ export function CreemProductsSection({
       {products.map((product) => (
         <Card
           key={product.productId}
-          className='hover:border-foreground/50 cursor-pointer transition-all hover:shadow-md'
+          className='bg-muted/30 border-none shadow-none ring-0 cursor-pointer transition-all hover:bg-muted/50'
           onClick={() => onProductSelect(product)}
         >
           <CardContent className='p-3 text-center sm:p-4'>

@@ -15,12 +15,30 @@ import {
   isStripePayment,
   isSepayPayment,
   isWaffoPancakePayment,
-  submitPaymentForm,
 } from '../lib'
 
 // ============================================================================
 // Payment Hook
 // ============================================================================
+
+export type PaymentResult =
+  | {
+      type: 'qr'
+      qrUrl: string
+      paymentUrl?: string
+      tradeNo?: string
+      amount?: number
+      transferContent?: string
+    }
+  | {
+      type: 'embedded-form'
+      url: string
+      params: Record<string, unknown>
+    }
+  | {
+      type: 'external'
+      url: string
+    }
 
 export function usePayment() {
   const [amount, setAmount] = useState<number>(0)
@@ -96,25 +114,41 @@ export function usePayment() {
         // Handle Stripe payment
         const stripeData = response.data as { pay_link?: string } | undefined
         if (isStripe && stripeData?.pay_link) {
-          window.open(stripeData.pay_link, '_blank')
-          toast.success(i18next.t('Redirecting to payment page...'))
-          return true
+          return {
+            type: 'external',
+            url: stripeData.pay_link,
+          } satisfies PaymentResult
         }
 
-        const sepayData = response.data as { qr_url?: string } | undefined
+        const sepayData = response.data as
+          | {
+              qr_url?: string
+              payment_url?: string
+              trade_no?: string
+              amount?: number
+              transfer_content?: string
+            }
+          | undefined
         if (isSepay && sepayData?.qr_url) {
-          window.open(sepayData.qr_url, '_blank')
-          toast.success(i18next.t('Opening VietQR code...'))
-          return true
+          return {
+            type: 'qr',
+            qrUrl: sepayData.qr_url,
+            paymentUrl: sepayData.payment_url,
+            tradeNo: sepayData.trade_no,
+            amount: sepayData.amount,
+            transferContent: sepayData.transfer_content,
+          } satisfies PaymentResult
         }
 
         // Handle non-Stripe payment
         if (!isStripe && !isSepay && response.data) {
           const url = (response as unknown as { url?: string }).url
           if (url) {
-            submitPaymentForm(url, response.data)
-            toast.success(i18next.t('Redirecting to payment page...'))
-            return true
+            return {
+              type: 'embedded-form',
+              url,
+              params: response.data,
+            } satisfies PaymentResult
           }
         }
 

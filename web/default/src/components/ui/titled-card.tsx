@@ -20,6 +20,8 @@ type TitledCardProps = {
   iconClassName?: string
   titleClassName?: string
   descriptionClassName?: string
+  hideBorder?: boolean
+  hideHeaderBorder?: boolean
 }
 
 export function TitledCard({
@@ -34,11 +36,23 @@ export function TitledCard({
   iconClassName,
   titleClassName,
   descriptionClassName,
+  hideBorder = false,
+  hideHeaderBorder = false,
 }: TitledCardProps) {
   return (
-    <Card className={cn('gap-0 overflow-hidden py-0', className)}>
+    <Card
+      className={cn(
+        'gap-0 overflow-hidden py-0',
+        hideBorder && 'ring-0 border-none shadow-none',
+        className
+      )}
+    >
       <CardHeader
-        className={cn('border-b p-3 !pb-3 sm:p-5 sm:!pb-5', headerClassName)}
+        className={cn(
+          'p-3 !pb-3 sm:p-5 sm:!pb-5',
+          !hideHeaderBorder && 'border-b',
+          headerClassName
+        )}
       >
         <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='flex min-w-0 items-center gap-3'>

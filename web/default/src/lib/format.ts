@@ -53,6 +53,27 @@ export function formatQuota(quota: number): string {
 }
 
 /**
+ * Format quota as USD regardless of the admin-selected local display currency.
+ * Subscription plans sell a USD-denominated benefit, so local currency display
+ * would make the quota look like a payment amount.
+ */
+export function formatQuotaUSD(quota: number): string {
+  if (!Number.isFinite(quota)) return '-'
+
+  const { config } = getCurrencyDisplay()
+  const amountUSD = quota / config.quotaPerUnit
+  const abs = Math.abs(amountUSD)
+
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: abs >= 1 ? 2 : 4,
+  }).format(amountUSD)
+}
+
+/**
  * Parse quota from the current display input back to quota units.
  */
 export function parseQuotaFromDollars(amount: number): number {

@@ -464,6 +464,71 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 	return nil
 }
 
+func RechargeSepay(referenceId string, providerPayload string, callerIp string) (err error) {
+	if referenceId == "" {
+		return errors.New("payment reference number not provided")
+	}
+
+	var quotaToAdd int
+	topUp := &TopUp{}
+
+	refCol := "`trade_no`"
+	if common.UsingPostgreSQL {
+		refCol = `"trade_no"`
+	}
+
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(refCol+" = ?", referenceId).First(topUp).Error
+		if err != nil {
+			return ErrTopUpNotFound
+		}
+
+		if topUp.PaymentProvider != PaymentProviderSepay {
+			return ErrPaymentMethodMismatch
+		}
+
+		if topUp.Status == common.TopUpStatusSuccess {
+			return nil
+		}
+		if topUp.Status != common.TopUpStatusPending {
+			return ErrTopUpStatusInvalid
+		}
+
+		dAmount := decimal.NewFromInt(topUp.Amount)
+		dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
+		quotaToAdd = int(dAmount.Mul(dQuotaPerUnit).IntPart())
+		if quotaToAdd <= 0 {
+			return errors.New("invalid top-up amount")
+		}
+
+		topUp.CompleteTime = common.GetTimestamp()
+		topUp.Status = common.TopUpStatusSuccess
+		err = tx.Save(topUp).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Model(&User{}).Where("id = ?", topUp.UserId).Update("quota", gorm.Expr("quota + ?", quotaToAdd)).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if errors.Is(err, ErrTopUpNotFound) {
+			return err
+		}
+		common.SysError("sepay topup failed: " + err.Error())
+		return errors.New("top-up failed, please try again later")
+	}
+
+	RecordTopupLog(topUp.UserId, fmt.Sprintf("SEPAY top-up succeeded, top-up amount: %v, payment amount: %.2f, payload: %s", logger.FormatQuota(quotaToAdd), topUp.Money, providerPayload), callerIp, topUp.PaymentMethod, PaymentMethodSepay)
+
+	return nil
+}
+
 func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 	if tradeNo == "" {
 		return errors.New("payment reference number not provided")

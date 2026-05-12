@@ -277,6 +277,29 @@ function formatCurrencyValue(
   return `${meta.symbol}${decimal}`
 }
 
+function isCustomCurrencySymbol(symbol: string): boolean {
+  const trimmed = symbol.trim()
+  return trimmed !== '' && trimmed !== DEFAULT_CURRENCY_CONFIG.customCurrencySymbol
+}
+
+function isVietnamDongSymbol(symbol: string): boolean {
+  return /^(vnd|vnđ|₫|đ)$/i.test(symbol.trim())
+}
+
+function formatVietnamDongAmount(
+  value: number,
+  options: Required<CurrencyFormatOptions>,
+  symbol: string
+): string {
+  const adjustedValue = adjustForMinimum(value, 0, options.minimumNonZero)
+  const formatted = new Intl.NumberFormat('vi-VN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(adjustedValue)
+
+  return `${formatted} ${symbol}`
+}
+
 /**
  * Get the current currency configuration and display metadata.
  *
@@ -552,4 +575,34 @@ export function formatLocalCurrencyAmount(
   const merged = mergeOptions(options)
 
   return formatCurrencyValue(amount, merged, meta)
+}
+
+/**
+ * Format an amount charged by the payment gateway in the configured local
+ * payment currency. This intentionally does not depend on quotaDisplayType:
+ * the wallet can display balance as USD while charging in VND/CNY/etc.
+ */
+export function formatPaymentLocalCurrencyAmount(
+  amount: number | null | undefined,
+  options?: CurrencyFormatOptions
+): string {
+  if (amount == null || Number.isNaN(amount)) return '-'
+
+  const { config } = getCurrencyDisplay()
+  const merged = mergeOptions(options)
+  const customSymbol = config.customCurrencySymbol?.trim() || ''
+
+  if (isCustomCurrencySymbol(customSymbol)) {
+    if (isVietnamDongSymbol(customSymbol)) {
+      return formatVietnamDongAmount(amount, merged, customSymbol)
+    }
+
+    return formatCurrencyValue(amount, merged, {
+      kind: 'custom',
+      symbol: customSymbol,
+      exchangeRate: 1,
+    })
+  }
+
+  return formatLocalCurrencyAmount(amount, options)
 }

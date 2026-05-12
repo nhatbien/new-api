@@ -3,9 +3,10 @@ import * as z from 'zod'
 import axios from 'axios'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { RotateCcw } from 'lucide-react'
+import { Check, Copy, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -23,6 +24,16 @@ import { FormDirtyIndicator } from '../components/form-dirty-indicator'
 import { FormNavigationGuard } from '../components/form-navigation-guard'
 import { SettingsSection } from '../components/settings-section'
 import { useUpdateOption } from '../hooks/use-update-option'
+
+const oauthRedirectPaths: Record<string, string | null> = {
+  github: '/oauth/github',
+  google: '/oauth/google',
+  discord: '/oauth/discord',
+  oidc: '/oauth/oidc',
+  linuxdo: '/api/oauth/linuxdo',
+  telegram: null,
+  wechat: null,
+}
 
 const oauthSchema = z.object({
   GitHubOAuthEnabled: z.boolean(),
@@ -58,12 +69,23 @@ type OAuthFormValues = z.infer<typeof oauthSchema>
 
 type OAuthSectionProps = {
   defaultValues: OAuthFormValues
+  serverAddress?: string
 }
 
-export function OAuthSection({ defaultValues }: OAuthSectionProps) {
+export function OAuthSection({
+  defaultValues,
+  serverAddress,
+}: OAuthSectionProps) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
+  const { copiedText, copyToClipboard } = useCopyToClipboard()
   const [activeTab, setActiveTab] = useState('github')
+  const browserOrigin =
+    typeof window !== 'undefined' ? window.location.origin : '<ServerAddress>'
+  const origin = serverAddress?.trim().replace(/\/+$/, '') || browserOrigin
+  const redirectPath = oauthRedirectPaths[activeTab]
+  const redirectUri = redirectPath ? `${origin}${redirectPath}` : ''
+  const isRedirectCopied = copiedText === redirectUri
 
   // Normalize empty strings for optional fields (only at mount)
   const normalizedDefaults: OAuthFormValues = {
@@ -268,6 +290,40 @@ export function OAuthSection({ defaultValues }: OAuthSectionProps) {
                 <TabsTrigger value='linuxdo'>{t('LinuxDO')}</TabsTrigger>
                 <TabsTrigger value='wechat'>{t('WeChat')}</TabsTrigger>
               </TabsList>
+
+              <div className='bg-muted/30 rounded-lg border p-4'>
+                <div className='space-y-1.5'>
+                  <FormLabel>{t('Redirect URI')}</FormLabel>
+                  <div className='flex flex-col gap-2 sm:flex-row'>
+                    <Input
+                      value={redirectUri || t('No redirect URI required')}
+                      readOnly
+                      className='font-mono text-xs sm:text-sm'
+                    />
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='sm:w-24'
+                      disabled={!redirectUri}
+                      onClick={() => {
+                        void copyToClipboard(redirectUri)
+                      }}
+                    >
+                      {isRedirectCopied ? (
+                        <Check className='text-success mr-2 h-4 w-4' />
+                      ) : (
+                        <Copy className='mr-2 h-4 w-4' />
+                      )}
+                      {isRedirectCopied ? t('Copied') : t('Copy')}
+                    </Button>
+                  </div>
+                  <FormDescription>
+                    {t(
+                      'Use this callback URL in the selected OAuth provider settings'
+                    )}
+                  </FormDescription>
+                </div>
+              </div>
 
               <TabsContent value='github' className='space-y-4'>
                 <FormField

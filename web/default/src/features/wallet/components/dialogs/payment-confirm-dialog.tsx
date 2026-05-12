@@ -1,6 +1,8 @@
-import { Loader2 } from 'lucide-react'
+import { ExternalLink, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { formatLocalCurrencyAmount } from '@/lib/currency'
+import {
+  formatPaymentLocalCurrencyAmount,
+} from '@/lib/currency'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,9 +14,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { DEFAULT_DISCOUNT_RATE } from '../../constants'
 import { formatCurrency, getPaymentIcon } from '../../lib'
 import type { PaymentMethod } from '../../types'
+import type { PaymentResult } from '../../hooks/use-payment'
 
 interface PaymentConfirmDialogProps {
   open: boolean
@@ -26,7 +30,45 @@ interface PaymentConfirmDialogProps {
   calculating: boolean
   processing: boolean
   discountRate?: number
-  usdExchangeRate?: number
+  paymentResult?: PaymentResult | null
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function buildPaymentFormSrcDoc(
+  url: string,
+  params: Record<string, unknown>
+): string {
+  const inputs = Object.entries(params)
+    .map(([key, value]) => {
+      return `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(String(value ?? ''))}" />`
+    })
+    .join('')
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { height: 100%; margin: 0; font-family: sans-serif; }
+      body { display: grid; place-items: center; color: #666; }
+    </style>
+  </head>
+  <body>
+    <form id="payment-form" method="POST" action="${escapeHtml(url)}">
+      ${inputs}
+      <noscript><button type="submit">Continue</button></noscript>
+    </form>
+    <script>document.getElementById('payment-form').submit();</script>
+  </body>
+</html>`
 }
 
 export function PaymentConfirmDialog({
@@ -39,16 +81,19 @@ export function PaymentConfirmDialog({
   calculating,
   processing,
   discountRate = DEFAULT_DISCOUNT_RATE,
-  usdExchangeRate = 1,
+  paymentResult,
 }: PaymentConfirmDialogProps) {
   const { t } = useTranslation()
   const hasDiscount = discountRate > 0 && discountRate < 1 && paymentAmount > 0
-  const originalAmount = hasDiscount ? paymentAmount / discountRate : 0
-  const discountAmount = hasDiscount ? originalAmount - paymentAmount : 0
+  const originalAmount = paymentAmount
+  const finalAmount = hasDiscount ? originalAmount * discountRate : originalAmount
+  const discountAmount = hasDiscount ? originalAmount - finalAmount : 0
+  const discountPercent = hasDiscount ? Math.round((1 - discountRate) * 100) : 0
+  const isAwaitingPayment = !!paymentResult
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className='max-sm:w-[calc(100vw-1.5rem)] sm:max-w-md'>
+        <AlertDialogContent className='max-sm:w-[calc(100vw-1.5rem)] sm:max-w-lg'>
         <AlertDialogHeader>
           <AlertDialogTitle className='text-xl font-semibold'>
             {t('Confirm Payment')}
@@ -64,11 +109,7 @@ export function PaymentConfirmDialog({
               {t('Topup Amount')}
             </span>
             <span className='text-lg font-semibold'>
-              {formatLocalCurrencyAmount(topupAmount * usdExchangeRate, {
-                digitsLarge: 2,
-                digitsSmall: 2,
-                abbreviate: false,
-              })}
+              {formatCurrency(topupAmount, '$')}
             </span>
           </div>
 
@@ -81,11 +122,19 @@ export function PaymentConfirmDialog({
             ) : (
               <div className='flex items-baseline gap-2'>
                 <span className='text-2xl font-semibold'>
-                  {formatCurrency(paymentAmount)}
+                  {formatPaymentLocalCurrencyAmount(finalAmount, {
+                    digitsLarge: 2,
+                    digitsSmall: 2,
+                    abbreviate: false,
+                  })}
                 </span>
                 {hasDiscount && (
                   <span className='text-muted-foreground text-sm line-through'>
-                    {formatCurrency(originalAmount)}
+                    {formatPaymentLocalCurrencyAmount(originalAmount, {
+                      digitsLarge: 2,
+                      digitsSmall: 2,
+                      abbreviate: false,
+                    })}
                   </span>
                 )}
               </div>
@@ -94,10 +143,16 @@ export function PaymentConfirmDialog({
 
           {hasDiscount && !calculating && (
             <div className='bg-muted/50 rounded-lg p-3'>
-              <div className='flex items-center justify-between text-sm'>
-                <span className='text-muted-foreground'>{t('You save')}</span>
+              <div className='flex items-center justify-between gap-3 text-sm'>
+                <span className='text-muted-foreground'>
+                  {t('Discount')} {discountPercent}% • {t('You save')}
+                </span>
                 <span className='font-semibold text-green-600'>
-                  {formatCurrency(discountAmount)}
+                  {formatPaymentLocalCurrencyAmount(discountAmount, {
+                    digitsLarge: 2,
+                    digitsSmall: 2,
+                    abbreviate: false,
+                  })}
                 </span>
               </div>
             </div>
@@ -119,13 +174,62 @@ export function PaymentConfirmDialog({
               </div>
             </div>
           </div>
+
+          {paymentResult?.type === 'qr' && (
+            <div className='border-t pt-4'>
+              <div className='flex flex-col items-center gap-3 text-center'>
+                <img
+                  src={paymentResult.qrUrl}
+                  alt={t('Payment QR code')}
+                  className='h-64 w-64 rounded-md border bg-white object-contain p-2'
+                />
+                {paymentResult.transferContent && (
+                  <div className='text-muted-foreground text-sm'>
+                    {t('Transfer content')}: {' '}
+                    <span className='font-medium text-foreground'>
+                      {paymentResult.transferContent}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {paymentResult?.type === 'embedded-form' && (
+            <div className='border-t pt-4'>
+              <iframe
+                title={t('Payment checkout')}
+                srcDoc={buildPaymentFormSrcDoc(
+                  paymentResult.url,
+                  paymentResult.params
+                )}
+                className='h-[420px] w-full rounded-md border bg-white'
+                sandbox='allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation'
+              />
+              <div className='mt-3 flex justify-end'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => window.open(paymentResult.url, '_blank')}
+                  className='gap-2'
+                >
+                  <ExternalLink className='h-4 w-4' />
+                  {t('Open in new tab')}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         <AlertDialogFooter className='grid grid-cols-2 gap-2 sm:flex'>
           <AlertDialogCancel disabled={processing}>
-            {t('Cancel')}
+            {isAwaitingPayment ? t('Close') : t('Cancel')}
           </AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} disabled={processing}>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={processing || isAwaitingPayment}
+          >
             {processing && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             {t('Confirm Payment')}
           </AlertDialogAction>

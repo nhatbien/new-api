@@ -1,4 +1,10 @@
-export { formatDuration, formatResetPeriod, formatTimestamp } from './format'
+export {
+  estimatePlanTotalQuota,
+  estimateQuotaCycles,
+  formatDuration,
+  formatResetPeriod,
+  formatTimestamp,
+} from './format'
 export {
   getPlanFormSchema,
   PLAN_FORM_DEFAULTS,

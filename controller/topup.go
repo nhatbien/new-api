@@ -23,11 +23,20 @@ import (
 )
 
 func GetTopUpInfo(c *gin.Context) {
+	enableEpay := isEpayTopUpEnabled()
+	enableStripe := isStripeTopUpEnabled()
+	enableWaffo := isWaffoTopUpEnabled()
+	enableWaffoPancake := isWaffoPancakeTopUpEnabled()
+	enableSepay := isSepayTopUpEnabled()
+
 	// 获取支付方式
-	payMethods := operation_setting.PayMethods
+	payMethods := make([]map[string]string, 0)
+	if enableEpay {
+		payMethods = append(payMethods, operation_setting.PayMethods...)
+	}
 
 	// 如果启用了 Stripe 支付，添加到支付方法列表
-	if isStripeTopUpEnabled() {
+	if enableStripe {
 		// 检查是否已经包含 Stripe
 		hasStripe := false
 		for _, method := range payMethods {
@@ -49,7 +58,6 @@ func GetTopUpInfo(c *gin.Context) {
 	}
 
 	// 如果启用了 Waffo 支付，添加到支付方法列表
-	enableWaffo := isWaffoTopUpEnabled()
 	if enableWaffo {
 		hasWaffo := false
 		for _, method := range payMethods {
@@ -70,7 +78,6 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
-	enableWaffoPancake := isWaffoPancakeTopUpEnabled()
 	if enableWaffoPancake {
 		hasWaffoPancake := false
 		for _, method := range payMethods {
@@ -90,7 +97,6 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
-	enableSepay := isSepayTopUpEnabled()
 	if enableSepay {
 		hasSepay := false
 		for _, method := range payMethods {
@@ -111,8 +117,8 @@ func GetTopUpInfo(c *gin.Context) {
 	}
 
 	data := gin.H{
-		"enable_online_topup":        isEpayTopUpEnabled(),
-		"enable_stripe_topup":        isStripeTopUpEnabled(),
+		"enable_online_topup":        enableEpay,
+		"enable_stripe_topup":        enableStripe,
 		"enable_creem_topup":         isCreemTopUpEnabled(),
 		"enable_waffo_topup":         enableWaffo,
 		"enable_waffo_pancake_topup": enableWaffoPancake,
@@ -160,7 +166,7 @@ func GetEpayClient() *epay.Client {
 	return withUrl
 }
 
-func getPayMoney(amount int64, group string) float64 {
+func getPayMoney(amount int64, group string, applyDiscount bool) float64 {
 	dAmount := decimal.NewFromInt(amount)
 	// 充值金额以“展示类型”为准：
 	// - USD/CNY: 前端传 amount 为金额单位；TOKENS: 前端传 tokens，需要换成 USD 金额
@@ -176,12 +182,9 @@ func getPayMoney(amount int64, group string) float64 {
 
 	dTopupGroupRatio := decimal.NewFromFloat(topupGroupRatio)
 	dPrice := decimal.NewFromFloat(operation_setting.Price)
-	// apply optional preset discount by the original request amount (if configured), default 1.0
 	discount := 1.0
-	if ds, ok := operation_setting.GetPaymentSetting().AmountDiscount[int(amount)]; ok {
-		if ds > 0 {
-			discount = ds
-		}
+	if applyDiscount {
+		discount = operation_setting.GetAmountDiscount(int(amount))
 	}
 	dDiscount := decimal.NewFromFloat(discount)
 
@@ -218,7 +221,7 @@ func RequestEpay(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "failed to get user group"})
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
+	payMoney := getPayMoney(req.Amount, group, true)
 	if payMoney < 0.01 {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "top-up amount is too low"})
 		return
@@ -443,7 +446,7 @@ func RequestAmount(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "failed to get user group"})
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
+	payMoney := getPayMoney(req.Amount, group, false)
 	if payMoney <= 0.01 {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "top-up amount is too low"})
 		return

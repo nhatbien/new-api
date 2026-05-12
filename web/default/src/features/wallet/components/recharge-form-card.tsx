@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Gift, ExternalLink, Loader2, Receipt, WalletCards } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { formatNumber } from '@/lib/format'
+import { formatPaymentLocalCurrencyAmount } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/tooltip'
 import {
   formatCurrency,
+  getAmountDiscount,
   getDiscountLabel,
   getPaymentIcon,
   getMinTopupAmount,
@@ -38,6 +39,7 @@ interface RechargeFormCardProps {
   selectedPreset: number | null
   onSelectPreset: (preset: PresetAmount) => void
   topupAmount: number
+  customAmountMode?: boolean
   onTopupAmountChange: (amount: number) => void
   paymentAmount: number
   calculating: boolean
@@ -68,6 +70,7 @@ export function RechargeFormCard({
   selectedPreset,
   onSelectPreset,
   topupAmount,
+  customAmountMode,
   onTopupAmountChange,
   paymentAmount,
   calculating,
@@ -100,11 +103,22 @@ export function RechargeFormCard({
 
   const handleAmountChange = (value: string) => {
     setLocalAmount(value)
-    const numValue = parseInt(value) || 0
+    const numValue = Math.max(0, parseInt(value) || 0)
     if (numValue >= 0) {
       onTopupAmountChange(numValue)
     }
   }
+
+  const extendedPresets = useMemo(() => {
+    if (presetAmounts.length === 0) return []
+    return [
+      ...presetAmounts,
+      { value: -1, label: t('Custom'), discount: 1.0 } as PresetAmount,
+    ]
+  }, [presetAmounts, t])
+
+  const showCustomInput =
+    customAmountMode || selectedPreset === -1 || presetAmounts.length === 0
 
   const hasConfigurableTopup =
     topupInfo?.enable_online_topup ||
@@ -173,6 +187,7 @@ export function RechargeFormCard({
       title={t('Add Funds')}
       description={t('Choose an amount and payment method')}
       icon={<WalletCards className='h-4 w-4' />}
+      hideHeaderBorder
       action={
         onOpenBilling ? (
           <Button
@@ -186,28 +201,50 @@ export function RechargeFormCard({
           </Button>
         ) : null
       }
-      contentClassName='space-y-4 sm:space-y-6'
+      contentClassName='space-y-6 sm:space-y-8 pb-8'
     >
       {/* Online Topup Section */}
       {hasAnyTopup ? (
-        <div className='space-y-4 sm:space-y-6'>
+        <div className='space-y-6 sm:space-y-8'>
           {hasConfigurableTopup && (
             <>
-              {presetAmounts.length > 0 && (
-                <div className='space-y-2.5 sm:space-y-3'>
+              {extendedPresets.length > 0 && (
+                <div className='space-y-3 sm:space-y-4'>
                   <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
                     {t('Amount')}
                   </Label>
                   <div className='grid grid-cols-2 gap-1.5 sm:gap-3 md:grid-cols-4'>
-                    {presetAmounts.map((preset, index) => {
-                      const discount =
-                        preset.discount ||
-                        topupInfo?.discount?.[preset.value] ||
-                        1.0
+                    {extendedPresets.map((preset, index) => {
+                      if (preset.value === -1) {
+                        return (
+                          <Button
+                            key='custom-preset'
+                            variant='outline'
+                            className={cn(
+                              'hover:border-primary/50 relative flex min-h-[80px] flex-col items-center justify-center rounded-xl px-3 py-2.5 text-center transition-all sm:min-h-[90px]',
+                              selectedPreset === -1
+                                ? 'border-primary bg-primary/5 ring-primary/20 ring-1'
+                                : 'border-muted bg-background'
+                            )}
+                            onClick={() => onSelectPreset(preset)}
+                          >
+                            <div className='text-base font-bold sm:text-lg'>
+                              {t('Custom')}
+                            </div>
+                            <div className='text-muted-foreground mt-1 text-[10px] font-medium uppercase tracking-tight'>
+                              {t('Flexible')}
+                            </div>
+                          </Button>
+                        )
+                      }
+
+                      const discount = getAmountDiscount(
+                        preset.value,
+                        topupInfo?.discount
+                      )
                       const {
-                        displayValue,
+                        originalPrice,
                         actualPrice,
-                        savedAmount,
                         hasDiscount,
                       } = calculatePresetPricing(
                         preset.value,
@@ -215,34 +252,47 @@ export function RechargeFormCard({
                         discount,
                         usdExchangeRate
                       )
+
                       return (
                         <Button
                           key={index}
                           variant='outline'
                           className={cn(
-                            'hover:border-foreground flex min-h-16 flex-col items-start rounded-lg px-3 py-2.5 text-left whitespace-normal sm:min-h-[72px] sm:p-4',
+                            'hover:border-primary/50 relative flex min-h-[80px] flex-col items-start rounded-xl px-3 py-3 text-left transition-all whitespace-normal sm:min-h-[90px] sm:px-4',
                             selectedPreset === preset.value
-                              ? 'border-foreground bg-foreground/5'
-                              : 'border-muted'
+                              ? 'border-primary bg-primary/5 ring-primary/20 ring-1'
+                              : 'border-muted bg-background'
                           )}
                           onClick={() => onSelectPreset(preset)}
                         >
-                          <div className='flex w-full items-center justify-between'>
-                            <div className='text-base font-semibold sm:text-lg'>
-                              {formatNumber(displayValue)}
+                          {hasDiscount && (
+                            <div className='bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 absolute top-2 right-2 rounded-md px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase'>
+                              {getDiscountLabel(discount)}
                             </div>
-                            {hasDiscount && (
-                              <div className='text-xs font-medium text-green-600'>
-                                {getDiscountLabel(discount)}
-                              </div>
-                            )}
+                          )}
+
+                          <div className='text-xl font-bold tracking-tight sm:text-2xl'>
+                            {formatCurrency(preset.value, '$')}
                           </div>
-                          <div className='text-muted-foreground mt-1.5 w-full text-xs sm:mt-2'>
-                            Pay {formatCurrency(actualPrice)}
-                            {hasDiscount && savedAmount > 0 && (
-                              <span className='text-green-600'>
-                                {' '}
-                                • Save {formatCurrency(savedAmount)}
+
+                          <div className='mt-auto flex w-full flex-wrap items-baseline gap-1.5'>
+                            <span className='text-foreground text-xs font-semibold whitespace-nowrap'>
+                              {formatPaymentLocalCurrencyAmount(actualPrice, {
+                                digitsLarge: 2,
+                                digitsSmall: 2,
+                                abbreviate: false,
+                              })}
+                            </span>
+                            {hasDiscount && (
+                              <span className='text-muted-foreground/60 text-[10px] line-through decoration-1 underline-offset-2 whitespace-nowrap'>
+                                {formatPaymentLocalCurrencyAmount(
+                                  originalPrice,
+                                  {
+                                    digitsLarge: 2,
+                                    digitsSmall: 2,
+                                    abbreviate: false,
+                                  }
+                                )}
                               </span>
                             )}
                           </div>
@@ -253,39 +303,53 @@ export function RechargeFormCard({
                 </div>
               )}
 
-              <div className='space-y-2.5 sm:space-y-3'>
-                <Label
-                  htmlFor='topup-amount'
-                  className='text-muted-foreground text-xs font-medium tracking-wider uppercase'
-                >
-                  {t('Custom Amount')}
-                </Label>
-                <div className='grid grid-cols-[minmax(0,1fr)_minmax(110px,0.55fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center'>
-                  <Input
-                    id='topup-amount'
-                    type='number'
-                    value={localAmount}
-                    onChange={(e) => handleAmountChange(e.target.value)}
-                    min={minTopup}
-                    placeholder={`Minimum ${minTopup}`}
-                    className='h-9 text-base sm:h-10 sm:text-lg'
-                  />
-                  <div className='bg-muted/30 flex min-h-9 items-center justify-between gap-2 rounded-md border px-3 lg:min-w-52'>
-                    <span className='text-muted-foreground truncate text-xs'>
-                      {t('Amount to pay:')}
-                    </span>
-                    {calculating ? (
-                      <Skeleton className='h-5 w-16' />
-                    ) : (
-                      <span className='text-sm font-semibold'>
-                        {formatCurrency(paymentAmount)}
+              {showCustomInput && (
+                <div className='space-y-3 sm:space-y-4'>
+                  <Label
+                    htmlFor='topup-amount'
+                    className='text-muted-foreground text-xs font-medium tracking-wider uppercase'
+                  >
+                    {t('Custom Amount')}
+                  </Label>
+                  <div className='grid grid-cols-[minmax(0,1fr)_minmax(110px,0.55fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center'>
+                    <Input
+                      id='topup-amount'
+                      type='number'
+                      value={localAmount}
+                      onChange={(e) => handleAmountChange(e.target.value)}
+                      min={minTopup}
+                      step={1}
+                      placeholder={`Minimum ${minTopup}`}
+                      className='h-9 text-base sm:h-10 sm:text-lg'
+                    />
+                    <div className='bg-muted/40 flex min-h-9 items-center justify-between gap-2 rounded-md px-3 lg:min-w-52'>
+                      <span className='text-muted-foreground truncate text-xs'>
+                        {t('Amount to pay:')}
                       </span>
-                    )}
+                      {calculating ? (
+                        <Skeleton className='h-5 w-16' />
+                      ) : (
+                        <span className='text-sm font-semibold'>
+                          {formatPaymentLocalCurrencyAmount(
+                            paymentAmount *
+                              getAmountDiscount(
+                                topupAmount,
+                                topupInfo?.discount
+                              ),
+                            {
+                              digitsLarge: 2,
+                              digitsSmall: 2,
+                              abbreviate: false,
+                            }
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className='space-y-2.5 sm:space-y-3'>
+              <div className='space-y-3 sm:space-y-4'>
                 <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
                   {t('Payment Method')}
                 </Label>
@@ -347,7 +411,7 @@ export function RechargeFormCard({
               {enableWaffoTopup &&
                 hasWaffoPaymentMethods &&
                 onWaffoMethodSelect && (
-                  <div className='space-y-2.5 sm:space-y-3'>
+                  <div className='space-y-3 sm:space-y-4'>
                     <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
                       {t('Waffo Payment')}
                     </Label>
@@ -416,7 +480,7 @@ export function RechargeFormCard({
         Array.isArray(creemProducts) &&
         creemProducts.length > 0 &&
         onCreemProductSelect && (
-          <div className='space-y-2.5 border-t pt-4 sm:space-y-3 sm:pt-6'>
+          <div className='space-y-3 sm:space-y-4'>
             <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
               {t('Creem Payment')}
             </Label>
@@ -428,7 +492,7 @@ export function RechargeFormCard({
         )}
 
       {/* Redemption Code Section */}
-      <div className='space-y-2.5 border-t pt-4 sm:space-y-3 sm:pt-6'>
+      <div className='space-y-3 sm:space-y-4'>
         <div className='flex items-center gap-2'>
           <Gift className='text-muted-foreground h-4 w-4' />
           <Label

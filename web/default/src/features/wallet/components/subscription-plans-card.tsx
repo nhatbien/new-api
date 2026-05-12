@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Crown, RefreshCw, Sparkles, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { formatQuota } from '@/lib/format'
+import { formatQuotaUSD } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -21,6 +21,7 @@ import { TitledCard } from '@/components/ui/titled-card'
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import {
@@ -34,7 +35,11 @@ import {
   updateBillingPreference,
 } from '@/features/subscriptions/api'
 import { SubscriptionPurchaseDialog } from '@/features/subscriptions/components/dialogs/subscription-purchase-dialog'
-import { formatDuration, formatResetPeriod } from '@/features/subscriptions/lib'
+import {
+  estimatePlanTotalQuota,
+  formatDuration,
+  formatResetPeriod,
+} from '@/features/subscriptions/lib'
 import type {
   PlanRecord,
   UserSubscriptionRecord,
@@ -48,7 +53,8 @@ interface SubscriptionPlansCardProps {
 
 function getEpayMethods(payMethods: PaymentMethod[] = []): PaymentMethod[] {
   return payMethods.filter(
-    (m) => m?.type && m.type !== 'stripe' && m.type !== 'creem'
+    (m) =>
+      m?.type && m.type !== 'stripe' && m.type !== 'creem' && m.type !== 'sepay'
   )
 }
 
@@ -93,6 +99,7 @@ export function SubscriptionPlansCard({
 
   const enableStripe = !!topupInfo?.enable_stripe_topup
   const enableCreem = !!topupInfo?.enable_creem_topup
+  const enableSepay = !!topupInfo?.enable_sepay_topup
   const enableOnlineTopUp = !!topupInfo?.enable_online_topup
   const epayMethods = useMemo(
     () => getEpayMethods(topupInfo?.pay_methods),
@@ -238,10 +245,11 @@ export function SubscriptionPlansCard({
         title={t('Subscription Plans')}
         description={t('Purchase a plan to enjoy model benefits')}
         icon={<Crown className='h-4 w-4' />}
-        contentClassName='space-y-4 sm:space-y-5'
+        hideHeaderBorder
+        contentClassName='space-y-6 sm:space-y-8 pb-8'
       >
         {/* My subscriptions & billing preference */}
-        <div className='rounded-xl border p-3 sm:p-4'>
+        <div className='bg-muted/30 rounded-xl p-3 sm:p-4'>
           <div className='flex flex-wrap items-center justify-between gap-2.5 sm:gap-3'>
             <div className='flex min-w-0 flex-wrap items-center gap-2'>
               <span className='text-sm font-medium'>
@@ -308,7 +316,7 @@ export function SubscriptionPlansCard({
                 value={displayPref}
                 onValueChange={(v) => v !== null && handlePreferenceChange(v)}
               >
-                <SelectTrigger className='h-8 flex-1 text-xs sm:w-[140px] sm:flex-none'>
+                <SelectTrigger className='bg-background/50 h-8 flex-1 border-none text-xs shadow-none sm:w-[140px] sm:flex-none'>
                   <SelectValue>
                     {getBillingPreferenceLabel(displayPref, t)}
                   </SelectValue>
@@ -368,8 +376,8 @@ export function SubscriptionPlansCard({
 
           {hasAny && (
             <>
-              <Separator className='my-3' />
-              <div className='max-h-64 space-y-3 overflow-y-auto pr-1'>
+              <Separator className='my-3 opacity-50' />
+              <div className='max-h-64 space-y-2 overflow-y-auto pr-1'>
                 {allSubscriptions.map((sub) => {
                   const subscription = sub.subscription
                   const totalAmount = Number(subscription?.amount_total || 0)
@@ -389,7 +397,7 @@ export function SubscriptionPlansCard({
                   return (
                     <div
                       key={subscription?.id}
-                      className='bg-background rounded-md border p-3 text-xs'
+                      className='bg-background/40 rounded-lg p-3 text-xs'
                     >
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-2'>
@@ -451,9 +459,9 @@ export function SubscriptionPlansCard({
                             <TooltipTrigger
                               render={<span className='cursor-help' />}
                             >
-                              {formatQuota(usedAmount)}/
-                              {formatQuota(totalAmount)} · {t('Remaining')}{' '}
-                              {formatQuota(remainAmount)}
+                              {formatQuotaUSD(usedAmount)}/
+                              {formatQuotaUSD(totalAmount)} · {t('Remaining')}{' '}
+                              {formatQuotaUSD(remainAmount)}
                             </TooltipTrigger>
                             <TooltipContent>
                               {t('Raw Quota')}: {usedAmount}/{totalAmount} ·{' '}
@@ -493,6 +501,8 @@ export function SubscriptionPlansCard({
               const plan = p?.plan
               if (!plan) return null
               const totalAmount = Number(plan.total_amount || 0)
+              const estimatedTotalQuota = estimatePlanTotalQuota(plan)
+              const hasDailyReset = plan.quota_reset_period === 'daily'
               const price = Number(plan.price_amount || 0).toFixed(2)
               const isPopular = index === 0 && plans.length > 1
               const limit = Number(plan.max_purchase_per_user || 0)
@@ -504,8 +514,11 @@ export function SubscriptionPlansCard({
                 formatResetPeriod(plan, t) !== t('No Reset')
                   ? `${t('Quota Reset')}: ${formatResetPeriod(plan, t)}`
                   : null,
-                totalAmount > 0
-                  ? `${t('Total Quota')}: ${formatQuota(totalAmount)}`
+                hasDailyReset && totalAmount > 0
+                  ? `${t('Daily Quota')}: ${formatQuotaUSD(totalAmount)}`
+                  : null,
+                estimatedTotalQuota > 0
+                  ? `${t('Total Quota')}: ${formatQuotaUSD(estimatedTotalQuota)}`
                   : `${t('Total Quota')}: ${t('Unlimited')}`,
                 limit > 0 ? `${t('Purchase Limit')}: ${limit}` : null,
                 plan.upgrade_group
@@ -517,8 +530,9 @@ export function SubscriptionPlansCard({
                 <Card
                   key={plan.id}
                   className={cn(
-                    'transition-shadow hover:shadow-md',
-                    isPopular && 'border-primary/70 shadow-sm'
+                    'bg-muted/15 hover:bg-muted/25 border-none shadow-none transition-all',
+                    isPopular &&
+                      'bg-primary/5 ring-primary/20 hover:bg-primary/10 ring-1'
                   )}
                 >
                   <CardContent className='flex h-full flex-col p-3.5 sm:p-4'>
@@ -563,23 +577,29 @@ export function SubscriptionPlansCard({
                       ))}
                     </div>
 
-                    <Separator className='mb-3' />
+                    <Separator className='mb-3 opacity-50' />
 
                     {reached ? (
-                      <Tooltip>
-                        <TooltipTrigger render={<div />}>
-                          <Button variant='outline' className='w-full' disabled>
-                            {t('Limit Reached')}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {t('Purchase limit reached')} ({count}/{limit})
-                        </TooltipContent>
-                      </Tooltip>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger render={<div />}>
+                            <Button
+                              variant='outline'
+                              className='w-full'
+                              disabled
+                            >
+                              {t('Limit Reached')}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t('Purchase limit reached')} ({count}/{limit})
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     ) : (
                       <Button
                         variant='outline'
-                        className='w-full'
+                        className='bg-background w-full border-none shadow-sm'
                         onClick={() => {
                           setSelectedPlan(p)
                           setPurchaseOpen(true)
@@ -611,6 +631,7 @@ export function SubscriptionPlansCard({
         plan={selectedPlan}
         enableStripe={enableStripe}
         enableCreem={enableCreem}
+        enableSepay={enableSepay}
         enableOnlineTopUp={enableOnlineTopUp}
         epayMethods={epayMethods}
         purchaseLimit={

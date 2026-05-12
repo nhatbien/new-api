@@ -21,3 +21,19 @@ func init() {
 func GetPaymentSetting() *PaymentSetting {
 	return &paymentSetting
 }
+
+func GetAmountDiscount(amount int) float64 {
+	bestThreshold := -1
+	discount := 1.0
+	for threshold, value := range paymentSetting.AmountDiscount {
+		if threshold <= amount && threshold > bestThreshold {
+			bestThreshold = threshold
+			if value > 0 {
+				discount = value
+			} else {
+				discount = 1.0
+			}
+		}
+	}
+	return discount
+}

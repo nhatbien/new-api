@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getTopupInfo } from '../api'
+import { PAYMENT_TYPES } from '../constants'
 import {
   generatePresetAmounts,
   mergePresetAmounts,
@@ -36,7 +37,7 @@ function parseJsonArray(data: unknown): unknown[] {
 
 function parsePaymentMethods(
   data: unknown,
-  stripeMinTopup: number
+  topupInfo: TopupInfo
 ): PaymentMethod[] {
   return parseJsonArray(data)
     .filter(
@@ -47,18 +48,42 @@ function parsePaymentMethods(
       const rawMinTopup = Number(item.min_topup)
       const normalizedMinTopup = Number.isFinite(rawMinTopup) ? rawMinTopup : 0
       const type = typeof item.type === 'string' ? item.type : ''
+      const minTopupByType: Record<string, number | undefined> = {
+        [PAYMENT_TYPES.STRIPE]: topupInfo.stripe_min_topup,
+        [PAYMENT_TYPES.WAFFO_PANCAKE]: topupInfo.waffo_pancake_min_topup,
+        [PAYMENT_TYPES.SEPAY]: topupInfo.sepay_min_topup,
+      }
+      const fallbackMinTopup = minTopupByType[type]
 
       return {
         name: typeof item.name === 'string' ? item.name : '',
         type,
         color: typeof item.color === 'string' ? item.color : undefined,
         min_topup:
-          type === 'stripe' && normalizedMinTopup <= 0
-            ? stripeMinTopup
+          fallbackMinTopup !== undefined && normalizedMinTopup <= 0
+            ? fallbackMinTopup
             : normalizedMinTopup,
       }
     })
-    .filter((item) => item.name && item.type && item.type !== 'waffo')
+    .filter((item) => {
+      if (!item.name || !item.type) {
+        return false
+      }
+
+      switch (item.type) {
+        case PAYMENT_TYPES.STRIPE:
+          return !!topupInfo.enable_stripe_topup
+        case PAYMENT_TYPES.CREEM:
+        case PAYMENT_TYPES.WAFFO:
+          return false
+        case PAYMENT_TYPES.WAFFO_PANCAKE:
+          return !!topupInfo.enable_waffo_pancake_topup
+        case PAYMENT_TYPES.SEPAY:
+          return !!topupInfo.enable_sepay_topup
+        default:
+          return !!topupInfo.enable_online_topup
+      }
+    })
 }
 
 function parseWaffoPayMethods(data: unknown): WaffoPayMethod[] {
@@ -164,7 +189,7 @@ export function useTopupInfo() {
         ...response.data,
         pay_methods: parsePaymentMethods(
           response.data.pay_methods,
-          response.data.stripe_min_topup
+          response.data
         ),
         amount_options: parseAmountOptions(response.data.amount_options),
         discount: parseDiscountMap(response.data.discount),

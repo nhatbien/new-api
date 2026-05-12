@@ -93,25 +93,44 @@ export async function deleteUserSubscription(
 export async function paySubscriptionStripe(
   data: SubscriptionPayRequest
 ): Promise<SubscriptionPayResponse> {
-  const res = await api.post('/api/subscription/stripe/pay', data)
+  const res = await api.post('/api/subscription/pay', {
+    ...data,
+    payment_provider: 'stripe',
+  })
   return res.data
 }
 
 export async function paySubscriptionCreem(
   data: SubscriptionPayRequest
 ): Promise<SubscriptionPayResponse> {
-  const res = await api.post('/api/subscription/creem/pay', data)
+  const res = await api.post('/api/subscription/pay', {
+    ...data,
+    payment_provider: 'creem',
+  })
   return res.data
 }
 
 export async function paySubscriptionEpay(
   data: SubscriptionPayRequest & { payment_method: string }
 ): Promise<SubscriptionPayResponse & { url?: string }> {
-  const res = await api.post('/api/subscription/epay/pay', data)
+  const res = await api.post('/api/subscription/pay', {
+    ...data,
+    payment_provider: 'epay',
+  })
   return {
     ...res.data,
     url: res.data.url || (res as unknown as { url?: string }).url,
   }
+}
+
+export async function paySubscriptionSepay(
+  data: SubscriptionPayRequest
+): Promise<SubscriptionPayResponse> {
+  const res = await api.post('/api/subscription/pay', {
+    ...data,
+    payment_provider: 'sepay',
+  })
+  return res.data
 }
 
 // ============================================================================

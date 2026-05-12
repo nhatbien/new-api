@@ -22,7 +22,7 @@ type SepayPayRequest struct {
 	Amount int64 `json:"amount"`
 }
 
-func getSepayPayMoney(amount int64, group string) float64 {
+func getSepayPayMoney(amount int64, group string, applyDiscount bool) float64 {
 	dAmount := decimal.NewFromInt(amount)
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
 		dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
@@ -35,8 +35,8 @@ func getSepayPayMoney(amount int64, group string) float64 {
 	}
 
 	discount := 1.0
-	if ds, ok := operation_setting.GetPaymentSetting().AmountDiscount[int(amount)]; ok && ds > 0 {
-		discount = ds
+	if applyDiscount {
+		discount = operation_setting.GetAmountDiscount(int(amount))
 	}
 
 	payMoney := dAmount.
@@ -86,7 +86,11 @@ func getSepayTransferContent(tradeNo string) string {
 	if contentPrefix == "" {
 		contentPrefix = "NAP"
 	}
-	return fmt.Sprintf("%s %s", contentPrefix, tradeNo)
+	return fmt.Sprintf("%s%s", contentPrefix, tradeNo)
+}
+
+func generateSepayTradeNo(userId int) string {
+	return fmt.Sprintf("S%d%s", userId, strings.ToUpper(common.GetRandomString(8)))
 }
 
 func RequestSepayAmount(c *gin.Context) {
@@ -107,7 +111,7 @@ func RequestSepayAmount(c *gin.Context) {
 		return
 	}
 
-	common.ApiSuccess(c, strconv.FormatFloat(getSepayPayMoney(req.Amount, group), 'f', 2, 64))
+	common.ApiSuccess(c, strconv.FormatFloat(getSepayPayMoney(req.Amount, group, false), 'f', 2, 64))
 }
 
 func RequestSepayPay(c *gin.Context) {
@@ -139,13 +143,13 @@ func RequestSepayPay(c *gin.Context) {
 		return
 	}
 
-	payMoney := getSepayPayMoney(req.Amount, group)
+	payMoney := getSepayPayMoney(req.Amount, group, true)
 	if payMoney < 1 {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "top-up amount is too low"})
 		return
 	}
 
-	tradeNo := fmt.Sprintf("USR%dNO%s%d", id, common.GetRandomString(6), time.Now().Unix())
+	tradeNo := generateSepayTradeNo(id)
 	amount := req.Amount
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
 		dAmount := decimal.NewFromInt(amount)

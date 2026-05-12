@@ -12,7 +12,6 @@ import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
 import { WalletStatsCard } from './components/wallet-stats-card'
-import { DEFAULT_DISCOUNT_RATE } from './constants'
 import {
   useTopupInfo,
   usePayment,
@@ -22,10 +21,12 @@ import {
   useWaffoPayment,
   useWaffoPancakePayment,
 } from './hooks'
+import type { PaymentResult } from './hooks/use-payment'
 import {
   getDefaultPaymentType,
   getMinTopupAmount,
   isWaffoPancakePayment,
+  getAmountDiscount,
 } from './lib'
 import type {
   UserWalletData,
@@ -44,6 +45,7 @@ export function Wallet(props: WalletProps) {
   const [userLoading, setUserLoading] = useState(true)
   const [topupAmount, setTopupAmount] = useState(0)
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null)
+  const [customAmountMode, setCustomAmountMode] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>()
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null)
@@ -55,6 +57,7 @@ export function Wallet(props: WalletProps) {
   const [selectedCreemProduct, setSelectedCreemProduct] =
     useState<CreemProduct | null>(null)
   const [showSubscriptionPanel, setShowSubscriptionPanel] = useState(true)
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null)
 
   const { status } = useStatus()
   const { currency } = useSystemConfig()
@@ -131,6 +134,13 @@ export function Wallet(props: WalletProps) {
 
   // Handle preset selection
   const handleSelectPreset = (preset: PresetAmount) => {
+    if (preset.value === -1) {
+      setCustomAmountMode(true)
+      setSelectedPreset(-1)
+      return
+    }
+
+    setCustomAmountMode(false)
     setTopupAmount(preset.value)
     setSelectedPreset(preset.value)
     calculatePaymentAmount(preset.value, getCurrentPaymentType())
@@ -140,12 +150,14 @@ export function Wallet(props: WalletProps) {
   const handleTopupAmountChange = (amount: number) => {
     setTopupAmount(amount)
     setSelectedPreset(null)
+    setCustomAmountMode(true)
     calculatePaymentAmount(amount, getCurrentPaymentType())
   }
 
   // Handle payment method selection
   const handlePaymentMethodSelect = async (method: PaymentMethod) => {
     setSelectedPaymentMethod(method)
+    setPaymentResult(null)
     setPaymentLoading(method.type)
 
     try {
@@ -168,11 +180,24 @@ export function Wallet(props: WalletProps) {
     if (!selectedPaymentMethod) return
 
     const isPancake = isWaffoPancakePayment(selectedPaymentMethod.type)
-    const success = isPancake
+    const result = isPancake
       ? await processWaffoPancakePayment(topupAmount)
       : await processPayment(topupAmount, selectedPaymentMethod.type)
 
-    if (success) {
+    if (!result) return
+
+    if (typeof result === 'object') {
+      if (result.type === 'external') {
+        window.open(result.url, '_blank')
+        setConfirmDialogOpen(false)
+        await fetchUser()
+        return
+      }
+      setPaymentResult(result)
+      return
+    }
+
+    if (result) {
       setConfirmDialogOpen(false)
       await fetchUser()
     }
@@ -229,7 +254,7 @@ export function Wallet(props: WalletProps) {
 
   // Get discount rate for current topup amount
   const getDiscountRate = useCallback(() => {
-    return topupInfo?.discount?.[topupAmount] || DEFAULT_DISCOUNT_RATE
+    return getAmountDiscount(topupAmount, topupInfo?.discount)
   }, [topupInfo, topupAmount])
 
   const handleSubscriptionAvailabilityChange = useCallback(
@@ -247,7 +272,7 @@ export function Wallet(props: WalletProps) {
           {t('Manage your balance and payment methods')}
         </SectionPageLayout.Description>
         <SectionPageLayout.Content>
-          <div className='mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-5'>
+          <div className='mx-auto flex w-full max-w-full flex-col gap-4 sm:gap-5'>
             <WalletStatsCard user={user} loading={userLoading} />
 
             <div
@@ -264,6 +289,7 @@ export function Wallet(props: WalletProps) {
                   selectedPreset={selectedPreset}
                   onSelectPreset={handleSelectPreset}
                   topupAmount={topupAmount}
+                  customAmountMode={customAmountMode}
                   onTopupAmountChange={handleTopupAmountChange}
                   paymentAmount={paymentAmount}
                   calculating={calculating}
@@ -309,7 +335,10 @@ export function Wallet(props: WalletProps) {
 
       <PaymentConfirmDialog
         open={confirmDialogOpen}
-        onOpenChange={setConfirmDialogOpen}
+        onOpenChange={(open) => {
+          setConfirmDialogOpen(open)
+          if (!open) setPaymentResult(null)
+        }}
         onConfirm={handlePaymentConfirm}
         topupAmount={topupAmount}
         paymentAmount={paymentAmount}
@@ -317,7 +346,7 @@ export function Wallet(props: WalletProps) {
         calculating={calculating}
         processing={processing || pancakeProcessing}
         discountRate={getDiscountRate()}
-        usdExchangeRate={effectiveUsdExchangeRate}
+        paymentResult={paymentResult}
       />
 
       <TransferDialog

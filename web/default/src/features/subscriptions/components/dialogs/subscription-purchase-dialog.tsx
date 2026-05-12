@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Crown, CalendarClock, Package } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { formatQuotaUSD } from '@/lib/format'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,8 +25,13 @@ import {
   paySubscriptionStripe,
   paySubscriptionCreem,
   paySubscriptionEpay,
+  paySubscriptionSepay,
 } from '../../api'
-import { formatDuration, formatResetPeriod } from '../../lib'
+import {
+  estimatePlanTotalQuota,
+  formatDuration,
+  formatResetPeriod,
+} from '../../lib'
 import type { PlanRecord } from '../../types'
 
 interface PaymentMethod {
@@ -39,6 +45,7 @@ interface Props {
   plan: PlanRecord | null
   enableStripe?: boolean
   enableCreem?: boolean
+  enableSepay?: boolean
   enableOnlineTopUp?: boolean
   epayMethods?: PaymentMethod[]
   purchaseLimit?: number
@@ -49,12 +56,19 @@ export function SubscriptionPurchaseDialog(props: Props) {
   const { t } = useTranslation()
   const [paying, setPaying] = useState(false)
   const [selectedEpayMethod, setSelectedEpayMethod] = useState('')
+  const [sepayQr, setSepayQr] = useState<{
+    qrUrl: string
+    amount?: number
+    transferContent?: string
+    tradeNo?: string
+  } | null>(null)
 
   useEffect(() => {
     if (props.open && props.epayMethods && props.epayMethods.length > 0) {
       setSelectedEpayMethod(props.epayMethods[0].type)
     } else if (!props.open) {
       setSelectedEpayMethod('')
+      setSepayQr(null)
     }
   }, [props.open, props.epayMethods])
 
@@ -63,15 +77,18 @@ export function SubscriptionPurchaseDialog(props: Props) {
 
   const hasStripe = props.enableStripe && !!plan.stripe_price_id
   const hasCreem = props.enableCreem && !!plan.creem_product_id
+  const hasSepay = props.enableSepay
   const hasEpay =
     props.enableOnlineTopUp && (props.epayMethods || []).length > 0
-  const hasAnyPayment = hasStripe || hasCreem || hasEpay
+  const hasAnyPayment = hasStripe || hasCreem || hasSepay || hasEpay
   const selectedEpayMethodLabel =
     (props.epayMethods || []).find((m) => m.type === selectedEpayMethod)
       ?.name ||
     selectedEpayMethod ||
     t('Select payment method')
   const totalAmount = Number(plan.total_amount || 0)
+  const estimatedTotalQuota = estimatePlanTotalQuota(plan)
+  const hasDailyReset = plan.quota_reset_period === 'daily'
   const price = Number(plan.price_amount || 0).toFixed(2)
   const limitReached =
     (props.purchaseLimit || 0) > 0 &&
@@ -107,6 +124,32 @@ export function SubscriptionPurchaseDialog(props: Props) {
         window.open(res.data.checkout_url, '_blank')
         toast.success(t('Payment page opened'))
         props.onOpenChange(false)
+      } else {
+        toast.error(
+          res.message && res.message !== 'success'
+            ? res.message
+            : t('Payment request failed')
+        )
+      }
+    } catch {
+      toast.error(t('Payment request failed'))
+    } finally {
+      setPaying(false)
+    }
+  }
+
+  const handlePaySepay = async () => {
+    setPaying(true)
+    try {
+      const res = await paySubscriptionSepay({ plan_id: plan.id })
+      if (res.message === 'success' && res.data?.qr_url) {
+        setSepayQr({
+          qrUrl: res.data.qr_url,
+          amount: res.data.amount,
+          transferContent: res.data.transfer_content,
+          tradeNo: res.data.trade_no,
+        })
+        toast.success(t('Payment initiated'))
       } else {
         toast.error(
           res.message && res.message !== 'success'
@@ -206,13 +249,26 @@ export function SubscriptionPurchaseDialog(props: Props) {
                 <span className='text-sm'>{formatResetPeriod(plan, t)}</span>
               </div>
             )}
+            {hasDailyReset && totalAmount > 0 && (
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground text-sm'>
+                  {t('Daily Quota')}
+                </span>
+                <span className='flex items-center gap-1 text-sm'>
+                  <Package className='h-3.5 w-3.5' />
+                  {formatQuotaUSD(totalAmount)}
+                </span>
+              </div>
+            )}
             <div className='flex items-center justify-between'>
               <span className='text-muted-foreground text-sm'>
                 {t('Total Quota')}
               </span>
               <span className='flex items-center gap-1 text-sm'>
                 <Package className='h-3.5 w-3.5' />
-                {totalAmount > 0 ? totalAmount : t('Unlimited')}
+                {estimatedTotalQuota > 0
+                  ? formatQuotaUSD(estimatedTotalQuota)
+                  : t('Unlimited')}
               </span>
             </div>
             {plan.upgrade_group && (
@@ -244,7 +300,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
               <p className='text-muted-foreground text-xs'>
                 {t('Select payment method')}
               </p>
-              {(hasStripe || hasCreem) && (
+              {(hasStripe || hasCreem || hasSepay) && (
                 <div className='grid grid-cols-2 gap-2 sm:flex'>
                   {hasStripe && (
                     <Button
@@ -266,6 +322,40 @@ export function SubscriptionPurchaseDialog(props: Props) {
                       Creem
                     </Button>
                   )}
+                  {hasSepay && (
+                    <Button
+                      variant='outline'
+                      className='flex-1'
+                      onClick={handlePaySepay}
+                      disabled={paying || limitReached}
+                    >
+                      SEPAY QR
+                    </Button>
+                  )}
+                </div>
+              )}
+              {sepayQr && (
+                <div className='rounded-lg border p-3'>
+                  <div className='flex flex-col items-center gap-3 text-center'>
+                    <img
+                      src={sepayQr.qrUrl}
+                      alt={t('Payment QR code')}
+                      className='h-64 w-64 rounded-md border bg-white object-contain p-2'
+                    />
+                    {sepayQr.amount !== undefined && (
+                      <div className='text-sm font-medium'>
+                        {t('You Pay')}: {sepayQr.amount}
+                      </div>
+                    )}
+                    {sepayQr.transferContent && (
+                      <div className='text-muted-foreground text-sm'>
+                        {t('Transfer content')}:{' '}
+                        <span className='text-foreground font-medium'>
+                          {sepayQr.transferContent}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               {hasEpay && (

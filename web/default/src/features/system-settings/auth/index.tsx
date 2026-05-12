@@ -6,6 +6,7 @@ import {
 } from './section-registry.tsx'
 
 const defaultAuthSettings: AuthSettings = {
+  ServerAddress: '',
   PasswordLoginEnabled: true,
   PasswordRegisterEnabled: true,
   EmailVerificationEnabled: false,
