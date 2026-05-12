@@ -101,6 +101,10 @@ export function SubscriptionPlansCard({
   const enableCreem = !!topupInfo?.enable_creem_topup
   const enableSepay = !!topupInfo?.enable_sepay_topup
   const enableOnlineTopUp = !!topupInfo?.enable_online_topup
+  const sepayMethod = useMemo(
+    () => topupInfo?.pay_methods?.find((m) => m?.type === 'sepay'),
+    [topupInfo?.pay_methods]
+  )
   const epayMethods = useMemo(
     () => getEpayMethods(topupInfo?.pay_methods),
     [topupInfo?.pay_methods]
@@ -632,6 +636,7 @@ export function SubscriptionPlansCard({
         enableStripe={enableStripe}
         enableCreem={enableCreem}
         enableSepay={enableSepay}
+        sepayMethod={sepayMethod}
         enableOnlineTopUp={enableOnlineTopUp}
         epayMethods={epayMethods}
         purchaseLimit={

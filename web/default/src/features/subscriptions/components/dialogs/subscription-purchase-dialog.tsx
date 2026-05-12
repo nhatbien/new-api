@@ -46,6 +46,7 @@ interface Props {
   enableStripe?: boolean
   enableCreem?: boolean
   enableSepay?: boolean
+  sepayMethod?: PaymentMethod
   enableOnlineTopUp?: boolean
   epayMethods?: PaymentMethod[]
   purchaseLimit?: number
@@ -81,6 +82,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
   const hasEpay =
     props.enableOnlineTopUp && (props.epayMethods || []).length > 0
   const hasAnyPayment = hasStripe || hasCreem || hasSepay || hasEpay
+  const sepayMethodLabel = props.sepayMethod?.name || 'SEPAY'
   const selectedEpayMethodLabel =
     (props.epayMethods || []).find((m) => m.type === selectedEpayMethod)
       ?.name ||
@@ -93,21 +95,23 @@ export function SubscriptionPurchaseDialog(props: Props) {
   const limitReached =
     (props.purchaseLimit || 0) > 0 &&
     (props.purchaseCount || 0) >= (props.purchaseLimit || 0)
+  const isPaySuccess = (res: { success?: boolean; message?: string }) =>
+    res.success === true || res.message === 'success'
+  const getPayErrorMessage = (res: { message?: string }) =>
+    res.message && res.message !== 'success'
+      ? res.message
+      : t('Payment request failed')
 
   const handlePayStripe = async () => {
     setPaying(true)
     try {
       const res = await paySubscriptionStripe({ plan_id: plan.id })
-      if (res.message === 'success' && res.data?.pay_link) {
+      if (isPaySuccess(res) && res.data?.pay_link) {
         window.open(res.data.pay_link, '_blank')
         toast.success(t('Payment page opened'))
         props.onOpenChange(false)
       } else {
-        toast.error(
-          res.message && res.message !== 'success'
-            ? res.message
-            : t('Payment request failed')
-        )
+        toast.error(getPayErrorMessage(res))
       }
     } catch {
       toast.error(t('Payment request failed'))
@@ -120,16 +124,12 @@ export function SubscriptionPurchaseDialog(props: Props) {
     setPaying(true)
     try {
       const res = await paySubscriptionCreem({ plan_id: plan.id })
-      if (res.message === 'success' && res.data?.checkout_url) {
+      if (isPaySuccess(res) && res.data?.checkout_url) {
         window.open(res.data.checkout_url, '_blank')
         toast.success(t('Payment page opened'))
         props.onOpenChange(false)
       } else {
-        toast.error(
-          res.message && res.message !== 'success'
-            ? res.message
-            : t('Payment request failed')
-        )
+        toast.error(getPayErrorMessage(res))
       }
     } catch {
       toast.error(t('Payment request failed'))
@@ -142,7 +142,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
     setPaying(true)
     try {
       const res = await paySubscriptionSepay({ plan_id: plan.id })
-      if (res.message === 'success' && res.data?.qr_url) {
+      if (isPaySuccess(res) && res.data?.qr_url) {
         setSepayQr({
           qrUrl: res.data.qr_url,
           amount: res.data.amount,
@@ -151,11 +151,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
         })
         toast.success(t('Payment initiated'))
       } else {
-        toast.error(
-          res.message && res.message !== 'success'
-            ? res.message
-            : t('Payment request failed')
-        )
+        toast.error(getPayErrorMessage(res))
       }
     } catch {
       toast.error(t('Payment request failed'))
@@ -179,7 +175,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
         plan_id: plan.id,
         payment_method: selectedEpayMethod,
       })
-      if (res.message === 'success' && res.url) {
+      if (isPaySuccess(res) && res.url) {
         const form = document.createElement('form')
         form.action = res.url
         form.method = 'POST'
@@ -199,11 +195,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
         toast.success(t('Payment initiated'))
         props.onOpenChange(false)
       } else {
-        toast.error(
-          res.message && res.message !== 'success'
-            ? res.message
-            : t('Payment request failed')
-        )
+        toast.error(getPayErrorMessage(res))
       }
     } catch {
       toast.error(t('Payment request failed'))
@@ -329,7 +321,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
                       onClick={handlePaySepay}
                       disabled={paying || limitReached}
                     >
-                      SEPAY QR
+                      {sepayMethodLabel}
                     </Button>
                   )}
                 </div>
