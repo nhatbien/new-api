@@ -107,6 +107,24 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 
 		if !hasSepay {
+			for _, method := range operation_setting.PayMethods {
+				if method["type"] != model.PaymentMethodSepay {
+					continue
+				}
+				sepayMethod := make(map[string]string, len(method)+1)
+				for key, value := range method {
+					sepayMethod[key] = value
+				}
+				if sepayMethod["min_topup"] == "" {
+					sepayMethod["min_topup"] = strconv.Itoa(setting.SepayMinTopUp)
+				}
+				payMethods = append(payMethods, sepayMethod)
+				hasSepay = true
+				break
+			}
+		}
+
+		if !hasSepay {
 			payMethods = append(payMethods, map[string]string{
 				"name":      "SEPAY QR",
 				"type":      model.PaymentMethodSepay,
