@@ -401,6 +401,9 @@ func (user *User) Insert(inviterId int) error {
 	if result.Error != nil {
 		return result.Error
 	}
+	if err := CreateDefaultTokenForUser(user.Id, user.Username); err != nil {
+		return err
+	}
 
 	// 用户创建成功后，根据角色初始化边栏配置
 	// 需要重新获取用户以确保有正确的ID和Role
@@ -457,6 +460,9 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 	result := tx.Create(user)
 	if result.Error != nil {
 		return result.Error
+	}
+	if err := CreateDefaultTokenForUserWithTx(tx, user.Id, user.Username); err != nil {
+		return err
 	}
 
 	return nil

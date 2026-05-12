@@ -23,6 +23,7 @@ const basicAuthSchema = z.object({
   PasswordLoginEnabled: z.boolean(),
   PasswordRegisterEnabled: z.boolean(),
   EmailVerificationEnabled: z.boolean(),
+  CreateDefaultApiKeyEnabled: z.boolean(),
   RegisterEnabled: z.boolean(),
   EmailDomainRestrictionEnabled: z.boolean(),
   EmailAliasRestrictionEnabled: z.boolean(),
@@ -168,6 +169,29 @@ export function BasicAuthSection({ defaultValues }: BasicAuthSectionProps) {
                   </FormLabel>
                   <FormDescription>
                     {t('Require email verification for new accounts')}
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='CreateDefaultApiKeyEnabled'
+            render={({ field }) => (
+              <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                <div className='space-y-0.5'>
+                  <FormLabel className='text-base'>
+                    {t('Default API Key')}
+                  </FormLabel>
+                  <FormDescription>
+                    {t('Create an initial API key automatically for new users')}
                   </FormDescription>
                 </div>
                 <FormControl>

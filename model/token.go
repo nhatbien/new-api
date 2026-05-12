@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/bytedance/gopkg/util/gopool"
 	"gorm.io/gorm"
@@ -280,6 +282,35 @@ func (token *Token) Insert() error {
 	var err error
 	err = DB.Create(token).Error
 	return err
+}
+
+func CreateDefaultTokenForUser(userId int, username string) error {
+	return CreateDefaultTokenForUserWithTx(DB, userId, username)
+}
+
+func CreateDefaultTokenForUserWithTx(tx *gorm.DB, userId int, username string) error {
+	if !constant.GenerateDefaultToken {
+		return nil
+	}
+	key, err := common.GenerateKey()
+	if err != nil {
+		return err
+	}
+	token := Token{
+		UserId:             userId,
+		Name:               username + " initial token",
+		Key:                key,
+		CreatedTime:        common.GetTimestamp(),
+		AccessedTime:       common.GetTimestamp(),
+		ExpiredTime:        -1,
+		RemainQuota:        500000,
+		UnlimitedQuota:     true,
+		ModelLimitsEnabled: false,
+	}
+	if setting.DefaultUseAutoGroup {
+		token.Group = "auto"
+	}
+	return tx.Create(&token).Error
 }
 
 // Update Make sure your token's fields is completed, because this will update non-zero values
