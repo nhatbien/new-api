@@ -3,7 +3,7 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   // SSR for `/` (SEO); other routes rendered client-side via [...path] catch-all.
   output: 'standalone',
-  trailingSlash: true,
+  trailingSlash: false,
   env: {
     NEXT_PUBLIC_REACT_APP_SERVER_URL:
       process.env.NEXT_PUBLIC_REACT_APP_SERVER_URL || '',
