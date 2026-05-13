@@ -1,14 +1,17 @@
 import type { Metadata, Viewport } from 'next'
-import Script from 'next/script'
-import { LegacyApp } from '@/components/legacy-app'
+import { getServerStatus } from '@/lib/server-status'
 import '@/styles/index.css'
 
-export const metadata: Metadata = {
-  title: 'New API',
-  description: 'Unified AI API gateway and admin dashboard.',
-  icons: {
-    icon: '/favicon.ico',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const status = await getServerStatus()
+
+  return {
+    title: status.systemName,
+    description: 'Unified AI API gateway and admin dashboard.',
+    icons: {
+      icon: '/favicon.ico',
+    },
+  }
 }
 
 export const viewport: Viewport = {
@@ -17,12 +20,15 @@ export const viewport: Viewport = {
   themeColor: '#fff',
 }
 
-export default function RootLayout() {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang='en' suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <Script src='/env.js' strategy='beforeInteractive' />
-        <LegacyApp />
+        {children}
       </body>
     </html>
   )

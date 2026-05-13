@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useLocation } from '@tanstack/react-router'
+import { useLocation } from '@/lib/next-router'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'

@@ -1,12 +1,13 @@
-import { Link } from '@tanstack/react-router'
+import { Link } from '@/lib/next-router'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import { useSystemConfig } from '@/hooks/use-system-config'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+
+const HEADER_LOGO = '/logo.png'
 
 type SystemBrandProps = {
   defaultName?: string
@@ -27,7 +28,6 @@ type SystemBrandProps = {
  */
 export function SystemBrand(props: SystemBrandProps) {
   const { t } = useTranslation()
-  const { logo } = useSystemConfig()
 
   const variant = props.variant ?? 'sidebar'
   if (variant === 'inline') {
@@ -42,7 +42,7 @@ export function SystemBrand(props: SystemBrandProps) {
       >
         <div className='flex h-7 w-32 items-center justify-start overflow-hidden sm:w-36'>
           <img
-            src={logo}
+            src={HEADER_LOGO}
             alt={t('Logo')}
             className='h-full w-full object-contain object-left'
           />
@@ -61,7 +61,7 @@ export function SystemBrand(props: SystemBrandProps) {
         >
           <div className='flex h-8 w-36 items-center justify-start overflow-hidden group-data-[collapsible=icon]:w-8'>
             <img
-              src={logo}
+              src={HEADER_LOGO}
               alt={t('Logo')}
               className='h-full w-full object-contain object-left group-data-[collapsible=icon]:object-cover'
             />

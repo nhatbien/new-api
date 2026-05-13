@@ -9,16 +9,21 @@ import { useEffect, useState } from 'react'
  * Supports:
  * - Basic: "OpenAI", "OpenAI.Color"
  * - Chained properties are parsed for compatibility, but only the lightweight
- *   SVG variants are rendered. Compound variants that depend on
- *   @lobehub/ui/antd-style are intentionally not imported because antd-style's
- *   cssinjs cache schedules updates inside useInsertionEffect in React 19.
+ *   SVG variants are rendered. Compound/avatar variants that depend on
+ *   antd-style are intentionally not imported because @ant-design/cssinjs
+ *   schedules cache updates inside useInsertionEffect in React 19.
  * - Size parameter: getLobeIcon("OpenAI", 20)
  */
 
 type IconProps = Record<string, unknown>
 type IconComponent = React.ComponentType<IconProps>
+type IconModule = { default?: IconComponent }
 
-const SUPPORTED_VARIANTS = new Set(['Color', 'Mono'])
+const SAFE_SVG_VARIANTS = new Set(['Color', 'Mono'])
+
+function loadLobeIcon(baseKey: string, variant: string): Promise<IconModule> {
+  return import(`@lobehub/icons/es/${baseKey}/components/${variant}.js`)
+}
 
 function FallbackIcon(props: { label: string; size: number }) {
   return (
@@ -40,7 +45,7 @@ function parseIconName(iconName: string): {
   const baseKey = segments[0]
   const maybeVariant = segments[1]
 
-  if (SUPPORTED_VARIANTS.has(maybeVariant)) {
+  if (SAFE_SVG_VARIANTS.has(maybeVariant)) {
     return { baseKey, propStartIndex: 2, variant: maybeVariant }
   }
 
@@ -62,11 +67,8 @@ function LobeIconRenderer(props: {
     setFailed(false)
     setIconComponent(null)
 
-    import(
-      /* webpackInclude: /components\/(Color|Mono)\.js$/ */
-      `@lobehub/icons/es/${props.baseKey}/components/${props.variant}.js`
-    )
-      .then((module: { default?: IconComponent }) => {
+    loadLobeIcon(props.baseKey, props.variant)
+      .then((module) => {
         if (isActive) setIconComponent(() => module.default ?? null)
       })
       .catch(() => {

@@ -1,9 +1,7 @@
 import type { NextConfig } from 'next'
 
-const isProduction = process.env.NODE_ENV === 'production'
-
 const nextConfig: NextConfig = {
-  output: isProduction ? 'export' : undefined,
+  // SSR enabled for homepage; dashboard remains client-side only
   trailingSlash: true,
   env: {
     NEXT_PUBLIC_REACT_APP_SERVER_URL:

@@ -10,17 +10,25 @@ const STORAGE_KEY = 'home_page_content'
  * Hook to load and manage custom home page content
  * Supports both Markdown/HTML content and iframe URLs
  */
-export function useHomePageContent(): HomePageContentResult {
-  const [content, setContent] = useState<string>('')
-  const [isLoaded, setIsLoaded] = useState(false)
+export function useHomePageContent(
+  initialContent = '',
+  initialLoaded = false
+): HomePageContentResult {
+  const [content, setContent] = useState<string>(initialContent)
+  const [isLoaded, setIsLoaded] = useState(initialLoaded)
 
   useEffect(() => {
     let mounted = true
 
     const loadContent = async () => {
       // Load from localStorage first for immediate display
-      const cached = localStorage.getItem(STORAGE_KEY)
-      if (cached && mounted) {
+      let cached: string | null = null
+      try {
+        cached = localStorage.getItem(STORAGE_KEY)
+      } catch {
+        // localStorage not available (SSR)
+      }
+      if (!initialLoaded && cached && mounted) {
         setContent(cached)
       }
 
@@ -55,7 +63,7 @@ export function useHomePageContent(): HomePageContentResult {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [initialLoaded])
 
   let isUrl = false
   try {

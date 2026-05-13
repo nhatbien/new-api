@@ -1,5 +1,5 @@
 import { type ReactNode, useState, useEffect } from 'react'
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link, useLocation } from '@/lib/next-router'
 import { ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {

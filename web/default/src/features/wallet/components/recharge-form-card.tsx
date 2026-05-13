@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { ChevronRight, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
+import { ChevronRight, Loader2, Check, SlidersHorizontal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatPaymentLocalCurrencyAmount } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -133,51 +134,58 @@ export function RechargeFormCard({
   if (loading) {
     return (
       <div className='space-y-6'>
-        <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4'>
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className='h-24 rounded-2xl' />
+            <Skeleton key={i} className='h-40 rounded-[20px]' />
           ))}
         </div>
-        <Skeleton className='h-40 rounded-2xl' />
+        <Skeleton className='h-32 rounded-[20px]' />
       </div>
     )
   }
 
   return (
-    <div className='flex flex-col gap-8 pb-8'>
+    <div className='flex flex-col gap-9 pb-8'>
       {/* Online Topup Section */}
       {hasAnyTopup ? (
-        <div className='flex flex-col gap-8'>
+        <div className='flex flex-col gap-10'>
           {hasConfigurableTopup && (
             <>
               {extendedPresets.length > 0 && (
-                <div className='flex flex-col gap-4'>
-                  <div className='flex items-center justify-between'>
-                    <Label className='text-muted-foreground text-xs font-bold tracking-wider uppercase'>
-                      1. {t('Select Amount')}
-                    </Label>
-                  </div>
-                  <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
+                <div className='flex flex-col gap-5'>
+                  <Label className='text-lg font-bold tracking-tight text-foreground'>
+                    1. {t('Select Amount')}
+                  </Label>
+                  <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4'>
                     {extendedPresets.map((preset, index) => {
-                      if (preset.value === -1) {
+                      const isSelected = selectedPreset === preset.value
+                      const isCustom = preset.value === -1
+
+                      if (isCustom) {
                         return (
                           <button
                             key='custom-preset'
                             type='button'
                             className={cn(
-                              'group relative flex min-h-[90px] flex-col items-center justify-center rounded-2xl border-2 px-4 py-3 transition-all duration-200',
-                              selectedPreset === -1
-                                ? 'border-primary bg-primary/5'
-                                : 'border-muted bg-background hover:border-primary/30 hover:bg-muted/30'
+                              'relative flex min-h-36 flex-col items-center justify-center rounded-[20px] border bg-background px-7 py-6 text-left shadow-sm transition-all duration-200',
+                              isSelected
+                                ? 'border-primary ring-1 ring-primary'
+                                : 'border-border hover:border-primary/50'
                             )}
                             onClick={() => onSelectPreset(preset)}
                           >
-                            <div className='text-lg font-bold sm:text-xl'>
+                            <div className='flex items-center gap-3 text-3xl font-bold'>
+                              <SlidersHorizontal className='size-7 text-muted-foreground' />
                               {t('Custom')}
                             </div>
-                            <div className='text-muted-foreground mt-1 text-[10px] font-medium uppercase tracking-tight'>
+                            <div className='mt-3 text-sm font-bold tracking-widest text-muted-foreground uppercase'>
                               {t('Flexible')}
                             </div>
+                            {isSelected && (
+                              <div className='absolute top-3 right-3 flex size-6 items-center justify-center rounded-full bg-primary text-white'>
+                                <Check className='size-3 stroke-[3]' />
+                              </div>
+                            )}
                           </button>
                         )
                       }
@@ -202,25 +210,25 @@ export function RechargeFormCard({
                           key={index}
                           type='button'
                           className={cn(
-                            'group relative flex min-h-[90px] flex-col items-start justify-between rounded-2xl border-2 px-4 py-4 text-left transition-all duration-200',
-                            selectedPreset === preset.value
-                              ? 'border-primary bg-primary/5'
-                              : 'border-muted bg-background hover:border-primary/30 hover:bg-muted/30'
+                            'relative flex min-h-36 flex-col items-start justify-center rounded-[20px] border bg-background px-7 py-6 text-left shadow-sm transition-all duration-200',
+                            isSelected
+                              ? 'border-primary ring-1 ring-primary'
+                              : 'border-border hover:border-primary/50'
                           )}
                           onClick={() => onSelectPreset(preset)}
                         >
                           {hasDiscount && (
-                            <div className='bg-green-500 absolute -top-2.5 -right-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ring-2 ring-white'>
+                            <div className='absolute top-3 right-4 rounded-full bg-green-500 px-3 py-1 text-[11px] font-bold text-white shadow-sm'>
                               {getDiscountLabel(discount)}
                             </div>
                           )}
 
-                          <div className='text-2xl font-black tracking-tight'>
+                          <div className='text-3xl font-bold tracking-tight'>
                             {formatCurrency(preset.value, '$')}
                           </div>
 
-                          <div className='mt-2 flex w-full flex-col'>
-                            <span className='text-foreground text-xs font-bold'>
+                          <div className='mt-4 flex flex-col gap-1'>
+                            <span className='text-base font-bold text-foreground'>
                               {formatPaymentLocalCurrencyAmount(actualPrice, {
                                 digitsLarge: 2,
                                 digitsSmall: 2,
@@ -228,7 +236,7 @@ export function RechargeFormCard({
                               })}
                             </span>
                             {hasDiscount && (
-                              <span className='text-muted-foreground/60 text-[10px] line-through decoration-1 underline-offset-2'>
+                              <span className='text-sm text-muted-foreground line-through'>
                                 {formatPaymentLocalCurrencyAmount(
                                   originalPrice,
                                   {
@@ -240,6 +248,12 @@ export function RechargeFormCard({
                               </span>
                             )}
                           </div>
+
+                          {isSelected && (
+                            <div className='absolute right-4 bottom-4 flex size-6 items-center justify-center rounded-full bg-primary text-white'>
+                              <Check className='size-3 stroke-[3]' />
+                            </div>
+                          )}
                         </button>
                       )
                     })}
@@ -247,63 +261,71 @@ export function RechargeFormCard({
                 </div>
               )}
 
-              {showCustomInput && (
-                <div className='bg-muted/30 flex flex-col gap-4 rounded-3xl border-2 border-dashed p-6 transition-all sm:p-8'>
-                  <Label
-                    htmlFor='topup-amount'
-                    className='text-muted-foreground text-xs font-bold tracking-wider uppercase'
+              <AnimatePresence mode='wait'>
+                {showCustomInput && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className='flex flex-col gap-6 rounded-[20px] border bg-background p-6 shadow-sm sm:p-8'
                   >
-                    {t('Custom Amount')}
-                  </Label>
-                  <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-                    <div className='relative flex-1'>
-                      <div className='text-muted-foreground absolute top-1/2 left-4 -translate-y-1/2 font-bold'>
-                        $
+                    <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
+                      <div className='relative flex-1'>
+                        <div className='text-muted-foreground absolute top-1/2 left-4 -translate-y-1/2 font-bold'>
+                          $
+                        </div>
+                        <Input
+                          id='topup-amount'
+                          type='number'
+                          value={localAmount}
+                          onChange={(e) => handleAmountChange(e.target.value)}
+                          min={minTopup}
+                          step={1}
+                          placeholder={`Min ${minTopup}`}
+                          className='h-14 rounded-xl border bg-background pl-8 text-xl font-bold focus-visible:ring-1 focus-visible:ring-primary'
+                        />
                       </div>
-                      <Input
-                        id='topup-amount'
-                        type='number'
-                        value={localAmount}
-                        onChange={(e) => handleAmountChange(e.target.value)}
-                        min={minTopup}
-                        step={1}
-                        placeholder={`Min ${minTopup}`}
-                        className='h-12 border-2 border-muted-foreground/20 bg-background pl-8 text-xl font-bold focus-visible:border-primary focus-visible:ring-0'
-                      />
-                    </div>
-                    <div className='hidden text-muted-foreground sm:block'>
-                      <ChevronRight className='size-6' />
-                    </div>
-                    <div className='bg-background flex flex-1 items-center justify-between rounded-xl border-2 border-muted-foreground/10 px-6 py-3'>
-                      <span className='text-muted-foreground text-sm font-medium'>
-                        {t('Total to pay')}
-                      </span>
-                      {calculating ? (
-                        <Skeleton className='h-7 w-20' />
-                      ) : (
-                        <span className='text-primary text-xl font-black'>
-                          {formatPaymentLocalCurrencyAmount(
-                            paymentAmount *
-                              getAmountDiscount(
-                                topupAmount,
-                                topupInfo?.discount
-                              ),
-                            {
-                              digitsLarge: 2,
-                              digitsSmall: 2,
-                              abbreviate: false,
-                            }
+                      <div className='hidden text-muted-foreground/20 sm:block'>
+                        <ChevronRight className='size-6' />
+                      </div>
+                      <div className='flex flex-1 items-center justify-between rounded-xl border bg-background px-6 py-4'>
+                        <div className='flex flex-col'>
+                          <span className='text-muted-foreground text-[10px] font-bold uppercase tracking-wider'>
+                            {t('Total to pay')}
+                          </span>
+                          {calculating ? (
+                            <Skeleton className='mt-1 h-6 w-20' />
+                          ) : (
+                            <span className='text-xl font-bold'>
+                              {formatPaymentLocalCurrencyAmount(
+                                paymentAmount *
+                                  getAmountDiscount(
+                                    topupAmount,
+                                    topupInfo?.discount
+                                  ),
+                                {
+                                  digitsLarge: 2,
+                                  digitsSmall: 2,
+                                  abbreviate: false,
+                                }
+                              )}
+                            </span>
                           )}
-                        </span>
-                      )}
+                        </div>
+                        {!calculating && (
+                          <div className='bg-primary/10 flex size-10 items-center justify-center rounded-full'>
+                            <Check className='text-primary size-5 stroke-[3]' />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className='flex flex-col gap-4'>
-                <Label className='text-muted-foreground text-xs font-bold tracking-wider uppercase'>
-                  2. {t('Choose Payment Method')}
+                <Label className='text-lg font-bold tracking-tight text-foreground'>
+                  {t('Choose Payment Method')}
                 </Label>
                 {hasStandardPaymentMethods || hasWaffoPaymentMethods ? (
                   <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
@@ -318,18 +340,18 @@ export function RechargeFormCard({
                           onClick={() => onPaymentMethodSelect(method)}
                           disabled={disabled || !!paymentLoading}
                           className={cn(
-                            'group hover:border-primary hover:bg-primary/5 h-14 justify-between gap-3 rounded-2xl border-2 px-5 transition-all',
-                            paymentLoading === method.type && 'border-primary'
+                            'h-14 justify-between gap-4 rounded-xl border-muted-foreground/10 px-5 transition-all hover:bg-muted/50',
+                            paymentLoading === method.type && 'border-primary ring-1 ring-primary'
                           )}
                         >
                           <div className='flex items-center gap-3'>
-                            <div className='bg-muted group-hover:bg-primary/10 flex size-8 items-center justify-center rounded-lg transition-colors'>
+                            <div className='flex size-8 items-center justify-center rounded-lg bg-muted/50'>
                               {paymentLoading === method.type ? (
                                 <Loader2 className='size-4 animate-spin' />
                               ) : (
                                 getPaymentIcon(
                                   method.type,
-                                  'size-4',
+                                  'size-4 opacity-80',
                                   method.icon,
                                   method.name
                                 )
@@ -337,7 +359,7 @@ export function RechargeFormCard({
                             </div>
                             <span className='font-bold'>{method.name}</span>
                           </div>
-                          <ChevronRight className='text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5' />
+                          <ChevronRight className='text-muted-foreground/30 size-4 transition-transform group-hover:translate-x-0.5' />
                         </Button>
                       )
 
@@ -370,27 +392,27 @@ export function RechargeFormCard({
                             onClick={() => onWaffoMethodSelect?.(method, index)}
                             disabled={belowMin || !!paymentLoading}
                             className={cn(
-                              'group hover:border-primary hover:bg-primary/5 h-14 justify-between gap-3 rounded-2xl border-2 px-5 transition-all',
-                              paymentLoading === loadingKey && 'border-primary'
+                              'h-14 justify-between gap-4 rounded-xl border-muted-foreground/10 px-5 transition-all hover:bg-muted/50',
+                              paymentLoading === loadingKey && 'border-primary ring-1 ring-primary'
                             )}
                           >
                             <div className='flex items-center gap-3'>
-                              <div className='bg-muted group-hover:bg-primary/10 flex size-8 items-center justify-center rounded-lg transition-colors'>
+                              <div className='flex size-8 items-center justify-center rounded-lg bg-muted/50'>
                                 {paymentLoading === loadingKey ? (
                                   <Loader2 className='size-4 animate-spin' />
                                 ) : method.icon ? (
                                   <img
                                     src={method.icon}
                                     alt={method.name}
-                                    className='size-4 object-contain'
+                                    className='size-4 object-contain opacity-80'
                                   />
                                 ) : (
-                                  getPaymentIcon('waffo')
+                                  getPaymentIcon('waffo', 'size-4 opacity-80')
                                 )}
                               </div>
                               <span className='font-bold'>{method.name}</span>
                             </div>
-                            <ChevronRight className='text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5' />
+                            <ChevronRight className='text-muted-foreground/30 size-4 transition-transform group-hover:translate-x-0.5' />
                           </Button>
                         )
 
@@ -411,7 +433,7 @@ export function RechargeFormCard({
                       })}
                   </div>
                 ) : (
-                  <Alert className='rounded-2xl'>
+                  <Alert className='rounded-2xl border-muted-foreground/10'>
                     <AlertDescription>
                       {t(
                         'No payment methods available. Please contact administrator.'
@@ -424,7 +446,7 @@ export function RechargeFormCard({
           )}
         </div>
       ) : (
-        <Alert className='rounded-2xl'>
+        <Alert className='rounded-2xl border-muted-foreground/10'>
           <AlertDescription>
             {t(
               'Online topup is not enabled. Please use redemption code or contact administrator.'
@@ -439,7 +461,7 @@ export function RechargeFormCard({
         creemProducts.length > 0 &&
         onCreemProductSelect && (
           <div className='flex flex-col gap-4'>
-            <Label className='text-muted-foreground text-xs font-bold tracking-wider uppercase'>
+            <Label className='text-muted-foreground ml-1 text-[11px] font-bold tracking-widest uppercase'>
               {t('Creem Products')}
             </Label>
             <CreemProductsSection

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Outlet, useRouterState } from '@tanstack/react-router'
+import { Outlet, useRouterState } from '@/lib/next-router'
 import { cn } from '@/lib/utils'
 
 type Variants = Record<string, unknown>

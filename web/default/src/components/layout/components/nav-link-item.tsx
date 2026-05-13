@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link } from '@/lib/next-router'
 import { cn } from '@/lib/utils'
 import type { TopNavLink } from '../types'
 

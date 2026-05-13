@@ -1,16 +1,26 @@
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
+import { useHydrated } from '@/hooks/use-hydrated'
 import { Markdown } from '@/components/ui/markdown'
 import { PublicLayout } from '@/components/layout'
 import { Footer } from '@/components/layout/components/footer'
 import { CTA, Features, Hero, HowItWorks, Stats } from './components'
 import { useHomePageContent } from './hooks'
 
-export function Home() {
+interface HomeProps {
+  initialContent?: string
+  initialContentLoaded?: boolean
+}
+
+export function Home(props: HomeProps = {}) {
   const { t } = useTranslation()
   const { auth } = useAuthStore()
-  const isAuthenticated = !!auth.user
-  const { content, isLoaded, isUrl } = useHomePageContent()
+  const hydrated = useHydrated()
+  const isAuthenticated = hydrated && !!auth.user
+  const { content, isLoaded, isUrl } = useHomePageContent(
+    props.initialContent,
+    props.initialContentLoaded
+  )
 
   if (!isLoaded) {
     return (

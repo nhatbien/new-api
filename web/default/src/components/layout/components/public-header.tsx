@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useRouterState } from '@/lib/next-router'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
 import { useNotifications } from '@/hooks/use-notifications'
 import { useSystemConfig } from '@/hooks/use-system-config'
+import { useHydrated } from '@/hooks/use-hydrated'
 import { useTopNavLinks } from '@/hooks/use-top-nav-links'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,6 +17,8 @@ import { ThemeSwitch } from '@/components/theme-switch'
 import { defaultTopNavLinks } from '../config/top-nav.config'
 import type { TopNavLink } from '../types'
 import { HeaderLogo } from './header-logo'
+
+const HEADER_LOGO = '/logo.png'
 
 export interface PublicHeaderProps {
   navLinks?: TopNavLink[]
@@ -49,18 +52,15 @@ export function PublicHeader(props: PublicHeaderProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const { auth } = useAuthStore()
-  const {
-    logo: systemLogo,
-    loading,
-    logoLoaded,
-  } = useSystemConfig()
+  const hydrated = useHydrated()
+  const { loading } = useSystemConfig()
   const dynamicLinks = useTopNavLinks()
   const notifications = useNotifications()
   const routerState = useRouterState()
   const pathname = routerState.location.pathname
 
   const user = auth.user
-  const isAuthenticated = !!user
+  const isAuthenticated = hydrated && !!user
   const links = dynamicLinks.length > 0 ? dynamicLinks : navLinks
 
   useEffect(() => {
@@ -103,9 +103,9 @@ export function PublicHeader(props: PublicHeaderProps) {
                   customLogo
                 ) : (
                   <HeaderLogo
-                    src={systemLogo}
-                    loading={loading}
-                    logoLoaded={logoLoaded}
+                    src={HEADER_LOGO}
+                    loading={false}
+                    logoLoaded={true}
                     className='h-full w-full rounded-none object-contain object-left'
                   />
                 )}

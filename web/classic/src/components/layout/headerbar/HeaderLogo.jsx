@@ -22,11 +22,11 @@ import { Link } from 'react-router-dom';
 import { Tag } from '@douyinfe/semi-ui';
 import SkeletonWrapper from '../components/SkeletonWrapper';
 
+const HEADER_LOGO = '/logo.png';
+
 const HeaderLogo = ({
   isMobile,
   isConsoleRoute,
-  logo,
-  logoLoaded,
   isLoading,
   isSelfUseMode,
   isDemoSiteMode,
@@ -40,14 +40,14 @@ const HeaderLogo = ({
     <Link to='/' className='group flex items-center gap-2'>
       <div className='relative h-9 w-36 md:w-40'>
         <SkeletonWrapper
-          loading={isLoading || !logoLoaded}
+          loading={isLoading}
           type='image'
           className='rounded-lg'
         />
         <img
-          src={logo}
+          src={HEADER_LOGO}
           alt='logo'
-          className={`absolute inset-0 w-full h-full object-contain object-left transition-all duration-200 group-hover:scale-105 ${!isLoading && logoLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 w-full h-full object-contain object-left transition-all duration-200 group-hover:scale-105 ${!isLoading ? 'opacity-100' : 'opacity-0'}`}
         />
       </div>
       <div className='hidden md:flex items-center gap-2'>

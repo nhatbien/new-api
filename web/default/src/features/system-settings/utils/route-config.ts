@@ -1,5 +1,5 @@
 import * as z from 'zod'
-import { redirect } from '@tanstack/react-router'
+import { redirect } from '@/lib/next-router'
 
 /**
  * Create search schema for settings routes with section parameter
@@ -44,15 +44,13 @@ export type SettingsRouteConfigOptions<
  *
  * @example
  * ```tsx
- * export const Route = createFileRoute('/_authenticated/system-settings/site')(
- *   createSettingsRouteConfig({
+ * createSettingsRouteConfig({
  *     sectionIds: SITE_SECTION_IDS,
  *     defaultSection: SITE_DEFAULT_SECTION,
  *     component: SiteSettings,
  *     routePath: '/system-settings/site',
  *     redirectToDefault: true,
- *   })
- * )
+ * })
  * ```
  */
 export function createSettingsRouteConfig<

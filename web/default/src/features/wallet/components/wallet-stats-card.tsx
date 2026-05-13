@@ -1,7 +1,7 @@
-import { Activity, BarChart3, WalletCards, Plus } from 'lucide-react'
+import { motion } from 'motion/react'
+import { BriefcaseBusiness, TrendingUp, Zap, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatQuota } from '@/lib/format'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import type { UserWalletData } from '../types'
 
@@ -13,89 +13,91 @@ interface WalletStatsCardProps {
 
 export function WalletStatsCard(props: WalletStatsCardProps) {
   const { t } = useTranslation()
+
   if (props.loading) {
     return (
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-        <div className='bg-primary/10 relative overflow-hidden rounded-2xl p-6'>
-          <Skeleton className='h-4 w-24' />
-          <Skeleton className='mt-3 h-10 w-40' />
-          <Skeleton className='mt-4 h-9 w-28 rounded-lg' />
-        </div>
-        <div className='bg-muted/35 rounded-2xl p-6'>
-          <Skeleton className='h-4 w-24' />
-          <Skeleton className='mt-3 h-8 w-32' />
-        </div>
-        <div className='bg-muted/35 rounded-2xl p-6'>
-          <Skeleton className='h-4 w-24' />
-          <Skeleton className='mt-3 h-8 w-32' />
-        </div>
+      <div className='grid grid-cols-1 gap-5 lg:grid-cols-3'>
+        <div className='h-56 rounded-[22px] bg-primary/10' />
+        <div className='h-56 rounded-[22px] border bg-background' />
+        <div className='h-56 rounded-[22px] border bg-background' />
       </div>
     )
   }
 
   return (
-    <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-      {/* Primary Balance Card */}
-      <div className='bg-primary relative flex flex-col justify-between overflow-hidden rounded-2xl p-6 text-white'>
-        <div className='relative z-10'>
-          <div className='flex items-center gap-2 opacity-80'>
-            <WalletCards className='size-4' />
-            <span className='text-xs font-medium tracking-wider uppercase'>
-              {t('Current Balance')}
-            </span>
+    <div className='grid grid-cols-1 gap-5 lg:grid-cols-3'>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className='flex min-h-56 flex-col justify-between overflow-hidden rounded-[22px] bg-primary p-8 text-white shadow-sm'
+      >
+        <div>
+          <div className='flex size-14 items-center justify-center rounded-xl bg-white/18'>
+            <BriefcaseBusiness className='size-7' />
           </div>
-          <div className='mt-2 font-mono text-3xl font-bold tracking-tight'>
+          <div className='mt-6 text-base font-semibold text-white/85'>
+            {t('Current Balance')}
+          </div>
+          <div className='mt-4 text-5xl font-bold tracking-tight'>
             {formatQuota(props.user?.quota ?? 0)}
           </div>
         </div>
 
-        <div className='relative z-10 mt-6'>
+        <div className='mt-6'>
           <Button
-            size='sm'
             variant='secondary'
-            className='h-9 w-fit gap-2 rounded-lg font-semibold whitespace-nowrap'
+            className='h-14 rounded-xl border-none bg-white px-7 text-base font-semibold text-black shadow-sm transition-all hover:bg-white/95 hover:text-black active:scale-95'
             onClick={props.onAddFunds}
           >
-            <Plus className='size-4' />
+            <Plus className='mr-2 size-5 stroke-[2.8] text-black' />
             {t('Add Funds')}
           </Button>
         </div>
+      </motion.div>
 
-        {/* Decorative elements */}
-        <div className='absolute -top-6 -right-6 h-24 w-24 rounded-full bg-white/10 blur-2xl' />
-        <div className='absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-black/10 blur-3xl' />
-      </div>
-
-      {/* Secondary Stats */}
-      <div className='bg-muted/35 flex flex-col justify-center rounded-2xl p-6 transition-colors hover:bg-muted/50'>
-        <div className='flex items-center gap-2 text-muted-foreground'>
-          <BarChart3 className='size-4' />
-          <span className='text-xs font-medium tracking-wider uppercase'>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className='flex min-h-56 flex-col justify-between rounded-[22px] border bg-background p-8 shadow-sm'
+      >
+        <div className='flex size-14 items-center justify-center rounded-xl bg-primary/10 text-primary'>
+          <TrendingUp className='size-7' />
+        </div>
+        <div>
+          <div className='text-base font-semibold text-foreground/80'>
             {t('Total Usage')}
-          </span>
+          </div>
+          <div className='mt-4 text-5xl font-bold tracking-tight text-foreground'>
+            {formatQuota(props.user?.used_quota ?? 0)}
+          </div>
+          <div className='mt-5 text-base text-muted-foreground'>
+            {t('Total quota consumed')}
+          </div>
         </div>
-        <div className='mt-2 font-mono text-2xl font-bold'>
-          {formatQuota(props.user?.used_quota ?? 0)}
-        </div>
-        <div className='text-muted-foreground/60 mt-1 text-xs'>
-          {t('Total consumed quota')}
-        </div>
-      </div>
+      </motion.div>
 
-      <div className='bg-muted/35 flex flex-col justify-center rounded-2xl p-6 transition-colors hover:bg-muted/50'>
-        <div className='flex items-center gap-2 text-muted-foreground'>
-          <Activity className='size-4' />
-          <span className='text-xs font-medium tracking-wider uppercase'>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className='flex min-h-56 flex-col justify-between rounded-[22px] border bg-background p-8 shadow-sm'
+      >
+        <div className='flex size-14 items-center justify-center rounded-xl bg-primary/10 text-primary'>
+          <Zap className='size-7' />
+        </div>
+        <div>
+          <div className='text-base font-semibold text-foreground/80'>
             {t('API Requests')}
-          </span>
+          </div>
+          <div className='mt-4 text-5xl font-bold tracking-tight text-foreground'>
+            {(props.user?.request_count ?? 0).toLocaleString()}
+          </div>
+          <div className='mt-5 text-base text-muted-foreground'>
+            {t('Total requests')}
+          </div>
         </div>
-        <div className='mt-2 font-mono text-2xl font-bold'>
-          {(props.user?.request_count ?? 0).toLocaleString()}
-        </div>
-        <div className='text-muted-foreground/60 mt-1 text-xs'>
-          {t('Total requests made')}
-        </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

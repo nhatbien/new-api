@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useBlocker } from '@tanstack/react-router'
+import { useBlocker } from '@/lib/next-router'
 import { useTranslation } from 'react-i18next'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 

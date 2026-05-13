@@ -4,6 +4,12 @@ import { getApiUrl, getCommonHeaders } from '@/lib/api'
 import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants'
 import type { ChatCompletionRequest, ChatCompletionChunk } from '../types'
 
+type SseEvent = Event & {
+  data?: string
+  responseCode?: number
+  readyState?: number
+}
+
 /**
  * Hook for handling streaming chat completion requests
  */
@@ -22,6 +28,7 @@ export function useStreamRequest() {
         headers: getCommonHeaders(),
         method: 'POST',
         payload: JSON.stringify(payload),
+        start: false,
       })
 
       sseSourceRef.current = source
@@ -37,6 +44,31 @@ export function useStreamRequest() {
           onError(errorMessage, errorCode)
           closeSource()
         }
+      }
+
+      const getErrorMessage = (e: SseEvent) => {
+        let errorMessage = e.data || ERROR_MESSAGES.API_REQUEST_ERROR
+        let errorCode: string | undefined
+
+        if (e.data) {
+          try {
+            const parsed = JSON.parse(e.data) as {
+              error?: { message?: string; code?: string }
+              message?: string
+            }
+            errorMessage =
+              parsed?.error?.message || parsed?.message || errorMessage
+            errorCode = parsed?.error?.code || undefined
+          } catch {
+            // not JSON, use raw string
+          }
+        } else if (e.responseCode) {
+          errorMessage = `HTTP ${e.responseCode}: ${ERROR_MESSAGES.CONNECTION_CLOSED}`
+        } else {
+          errorMessage = ERROR_MESSAGES.NETWORK_ERROR
+        }
+
+        return { errorMessage, errorCode }
       }
 
       source.addEventListener('message', (e: MessageEvent) => {
@@ -66,44 +98,24 @@ export function useStreamRequest() {
         }
       })
 
-      source.addEventListener('error', (e: Event & { data?: string }) => {
+      source.addEventListener('error', (e: SseEvent) => {
         // Only handle errors if stream didn't complete normally
         if (source.readyState !== 2) {
           // eslint-disable-next-line no-console
-          console.error('SSE Error:', e)
-          let errorMessage = e.data || ERROR_MESSAGES.API_REQUEST_ERROR
-          let errorCode: string | undefined
-          if (e.data) {
-            try {
-              const parsed = JSON.parse(e.data) as {
-                error?: { message?: string; code?: string }
-              }
-              if (parsed?.error) {
-                errorMessage = parsed.error.message || errorMessage
-                errorCode = parsed.error.code || undefined
-              }
-            } catch {
-              // not JSON, use raw string
-            }
-          }
+          console.warn('SSE Error:', {
+            data: e.data,
+            responseCode: e.responseCode,
+          })
+          const { errorMessage, errorCode } = getErrorMessage(e)
           handleError(errorMessage, errorCode)
         }
       })
 
-      source.addEventListener(
-        'readystatechange',
-        (e: Event & { readyState?: number }) => {
-          const status = (source as unknown as { status?: number }).status
-          if (
-            e.readyState !== undefined &&
-            e.readyState >= 2 &&
-            status !== undefined &&
-            status !== 200
-          ) {
-            handleError(`HTTP ${status}: ${ERROR_MESSAGES.CONNECTION_CLOSED}`)
-          }
+      source.addEventListener('readystatechange', (e: SseEvent) => {
+        if (e.readyState === 2 && !isStreamCompleteRef.current) {
+          sseSourceRef.current = null
         }
-      )
+      })
 
       try {
         source.stream()

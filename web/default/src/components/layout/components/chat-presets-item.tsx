@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react'
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link, useLocation } from '@/lib/next-router'
 import { ExternalLink, Loader2, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'

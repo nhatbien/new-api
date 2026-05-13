@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@/lib/next-router'
 import {
   AlertCircle,
   CheckCircle2,

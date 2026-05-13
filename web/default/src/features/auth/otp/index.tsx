@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link } from '@/lib/next-router'
 import { useTranslation } from 'react-i18next'
 import { AuthLayout } from '../auth-layout'
 import { OtpForm } from './components/otp-form'

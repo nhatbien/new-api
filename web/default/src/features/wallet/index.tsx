@@ -280,26 +280,8 @@ export function Wallet(props: WalletProps) {
   return (
     <>
       <SectionPageLayout>
-        <div className='flex items-center justify-between gap-4 pb-4'>
-          <div>
-            <SectionPageLayout.Title>{t('Wallet')}</SectionPageLayout.Title>
-            <SectionPageLayout.Description>
-              {t('Manage your balance and payment methods')}
-            </SectionPageLayout.Description>
-          </div>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => setBillingDialogOpen(true)}
-            className='hidden gap-2 sm:flex'
-          >
-            <Receipt className='size-4' />
-            {t('Order History')}
-          </Button>
-        </div>
-
         <SectionPageLayout.Content>
-          <div className='mx-auto flex w-full max-w-full flex-col gap-6 sm:gap-8'>
+          <div className='mx-auto flex w-full max-w-[1120px] flex-col gap-7 py-6 sm:gap-9 lg:py-8'>
             <WalletStatsCard
               user={user}
               loading={userLoading}
@@ -307,23 +289,24 @@ export function Wallet(props: WalletProps) {
             />
 
             {/* Simplified Redemption Code Section */}
-            <div className='bg-muted/30 flex flex-col items-center justify-between gap-4 rounded-2xl border-2 border-dashed p-4 sm:flex-row sm:px-6'>
-              <div className='flex items-center gap-3'>
-                <Gift className='text-primary size-5' />
-                <span className='text-sm font-bold'>{t('Redemption Code')}</span>
+            <div className='flex flex-col items-center justify-between gap-4 rounded-[20px] border bg-background p-5 shadow-sm sm:flex-row sm:px-6'>
+              <div className='flex items-center gap-5'>
+                <Gift className='size-6 text-primary' />
+                <span className='text-base font-semibold'>
+                  {t('Redemption Code')}
+                </span>
               </div>
-              <div className='flex w-full items-center gap-2 sm:w-auto'>
+              <div className='flex w-full items-center gap-3 sm:w-auto'>
                 <Input
                   value={redemptionCode}
                   onChange={(e) => setRedemptionCode(e.target.value)}
                   placeholder={t('Enter code...')}
-                  className='h-9 w-full rounded-lg border-2 border-muted-foreground/20 bg-background px-3 font-mono text-xs focus-visible:border-primary focus-visible:ring-0 sm:w-64'
+                  className='h-12 w-full rounded-xl border bg-background px-5 text-sm focus-visible:border-primary focus-visible:ring-0 sm:w-64'
                 />
                 <Button
                   onClick={handleRedeem}
                   disabled={redeeming || !redemptionCode}
-                  size='sm'
-                  className='h-9 rounded-lg px-4 font-bold'
+                  className='h-12 rounded-xl px-6 font-semibold'
                 >
                   {redeeming ? (
                     <Loader2 className='size-3 animate-spin' />
@@ -340,11 +323,11 @@ export function Wallet(props: WalletProps) {
                 onValueChange={setActiveTab}
                 className='w-full'
               >
-                <div className='flex flex-wrap items-center justify-between gap-4 border-b pb-4'>
-                  <TabsList className='bg-muted/50 flex h-11 w-fit gap-1 rounded-xl p-1'>
+                <div className='flex flex-wrap items-center justify-between gap-4 border-b'>
+                  <TabsList className='h-14 w-fit gap-6 rounded-none bg-transparent p-0'>
                     <TabsTrigger
                       value='topup'
-                      className='data-active:bg-background h-9 gap-2 rounded-lg px-4 text-sm font-bold transition-all'
+                      className='data-active:border-primary data-active:text-foreground h-14 gap-3 rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 text-base font-medium text-muted-foreground shadow-none transition-all data-active:bg-transparent data-active:shadow-none'
                     >
                       <WalletCards className='size-4' />
                       {t('Add Funds')}
@@ -352,7 +335,7 @@ export function Wallet(props: WalletProps) {
                     {showSubscriptionPanel && (
                       <TabsTrigger
                         value='subscriptions'
-                        className='data-active:bg-background h-9 gap-2 rounded-lg px-4 text-sm font-bold transition-all'
+                        className='data-active:border-primary data-active:text-foreground h-14 gap-3 rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 text-base font-medium text-muted-foreground shadow-none transition-all data-active:bg-transparent data-active:shadow-none'
                       >
                         <Crown className='size-4' />
                         {t('Subscriptions')}
@@ -360,7 +343,7 @@ export function Wallet(props: WalletProps) {
                     )}
                     <TabsTrigger
                       value='affiliate'
-                      className='data-active:bg-background h-9 gap-2 rounded-lg px-4 text-sm font-bold transition-all'
+                      className='data-active:border-primary data-active:text-foreground h-14 gap-3 rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 text-base font-medium text-muted-foreground shadow-none transition-all data-active:bg-transparent data-active:shadow-none'
                     >
                       <Share2 className='size-4' />
                       {t('Affiliate')}
@@ -369,16 +352,15 @@ export function Wallet(props: WalletProps) {
 
                   <Button
                     variant='ghost'
-                    size='sm'
                     onClick={() => setBillingDialogOpen(true)}
-                    className='h-10 gap-2 rounded-xl px-4 font-bold'
+                    className='h-12 gap-2 rounded-xl px-4 text-base font-medium text-foreground'
                   >
                     <Receipt className='size-4' />
                     {t('Transaction History')}
                   </Button>
                 </div>
 
-                <div className='mt-6'>
+                <div className='mt-9'>
                   <TabsContent value='topup' className='focus-visible:ring-0'>
                     <div id='wallet-add-funds' className='scroll-mt-4'>
                       <RechargeFormCard

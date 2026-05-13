@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useBlocker } from '@tanstack/react-router'
+import { useBlocker } from '@/lib/next-router'
 
 /**
  * @deprecated Use FormNavigationGuard component instead for better UX
