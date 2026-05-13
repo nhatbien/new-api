@@ -21,9 +21,11 @@ import {
   showError,
   formatMessageForAPI,
   isValidMessage,
+  getUserIdFromLocalStorage,
 } from './utils';
 import axios from 'axios';
 import { MESSAGE_ROLES } from '../constants/playground.constants';
+import { authHeader } from './auth';
 
 function normalizeRequestUrl(url) {
   if (!url || /^https?:\/\//i.test(url)) return url;
@@ -36,7 +38,6 @@ export let API = axios.create({
     : '',
 });
 
-
 function redirectToOAuthUrl(url, options = {}) {
   const { openInNewTab = false } = options;
   const targetUrl = typeof url === 'string' ? url : url.toString();
@@ -48,7 +49,6 @@ function redirectToOAuthUrl(url, options = {}) {
 
   window.location.assign(targetUrl);
 }
-
 
 function patchAPIInstance(instance) {
   const originalGet = instance.get.bind(instance);
@@ -104,6 +104,17 @@ API.interceptors.response.use(
 
 API.interceptors.request.use((config) => {
   config.url = normalizeRequestUrl(config.url);
+  const headers = {
+    ...authHeader(),
+  };
+  const userId = getUserIdFromLocalStorage();
+  if (userId > 0) {
+    headers['New-Api-User'] = String(userId);
+  }
+  config.headers = {
+    ...config.headers,
+    ...headers,
+  };
   return config;
 });
 

@@ -19,11 +19,9 @@ import {
   Timer,
   type LucideIcon,
 } from 'lucide-react'
-import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
 import { getUserModels } from '@/lib/api'
-import { MOTION_TRANSITION } from '@/lib/motion'
 import { ROLE } from '@/lib/roles'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -253,7 +251,6 @@ function RequestPreview(props: {
   signals: HeroSignal[]
 }) {
   const { t } = useTranslation()
-  const shouldReduceMotion = useReducedMotion()
   const previewLines = props.example.curl.split('\n').map((line) => {
     if (line.includes('Authorization: Bearer')) {
       return `  -H "Authorization: Bearer ${props.example.displayKey}" \\`
@@ -262,21 +259,11 @@ function RequestPreview(props: {
   })
 
   return (
-    <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
-      animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
-      transition={MOTION_TRANSITION.slow}
-      className='bg-background/75 relative overflow-hidden rounded-2xl border p-3 shadow-sm backdrop-blur'
-    >
-      {!shouldReduceMotion && (
-        <motion.div
-          className='via-foreground/30 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent'
-          animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-          aria-hidden='true'
-        />
-      )}
-
+    <div className='animate-appear-zoom bg-background/75 relative overflow-hidden rounded-2xl border p-3 opacity-0 shadow-sm backdrop-blur'>
+      <div
+        className='dashboard-preview-shine via-foreground/30 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent'
+        aria-hidden='true'
+      />
       <div className='flex items-center justify-between gap-3 border-b pb-3'>
         <div className='flex min-w-0 items-center gap-2'>
           <span className='bg-white border-primary/20 text-primary flex size-8 shrink-0 items-center justify-center rounded-lg border shadow-xs'>
@@ -356,7 +343,7 @@ function RequestPreview(props: {
           )
         })}
       </div>
-    </motion.div>
+    </div>
   )
 }
 

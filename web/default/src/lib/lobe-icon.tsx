@@ -1,13 +1,89 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
 /**
  * LobeHub Icon Loader
  * Dynamically load and render icons from @lobehub/icons
  *
  * Supports:
  * - Basic: "OpenAI", "OpenAI.Color"
- * - Chained properties: "OpenAI.Avatar.type={'platform'}"
+ * - Chained properties are parsed for compatibility, but only the lightweight
+ *   SVG variants are rendered. Compound variants that depend on
+ *   @lobehub/ui/antd-style are intentionally not imported because antd-style's
+ *   cssinjs cache schedules updates inside useInsertionEffect in React 19.
  * - Size parameter: getLobeIcon("OpenAI", 20)
  */
-import * as LobeIcons from '@lobehub/icons'
+
+type IconProps = Record<string, unknown>
+type IconComponent = React.ComponentType<IconProps>
+
+const SUPPORTED_VARIANTS = new Set(['Color', 'Mono'])
+
+function FallbackIcon(props: { label: string; size: number }) {
+  return (
+    <div
+      className='bg-muted text-muted-foreground flex items-center justify-center rounded-full text-xs font-medium'
+      style={{ width: props.size, height: props.size }}
+    >
+      {props.label}
+    </div>
+  )
+}
+
+function parseIconName(iconName: string): {
+  baseKey: string
+  propStartIndex: number
+  variant: string
+} {
+  const segments = iconName.split('.')
+  const baseKey = segments[0]
+  const maybeVariant = segments[1]
+
+  if (SUPPORTED_VARIANTS.has(maybeVariant)) {
+    return { baseKey, propStartIndex: 2, variant: maybeVariant }
+  }
+
+  return { baseKey, propStartIndex: 1, variant: 'Mono' }
+}
+
+function LobeIconRenderer(props: {
+  baseKey: string
+  fallbackLabel: string
+  iconProps: IconProps
+  size: number
+  variant: string
+}) {
+  const [IconComponent, setIconComponent] = useState<IconComponent | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let isActive = true
+    setFailed(false)
+    setIconComponent(null)
+
+    import(
+      /* webpackInclude: /components\/(Color|Mono)\.js$/ */
+      `@lobehub/icons/es/${props.baseKey}/components/${props.variant}.js`
+    )
+      .then((module: { default?: IconComponent }) => {
+        if (isActive) setIconComponent(() => module.default ?? null)
+      })
+      .catch(() => {
+        if (isActive) setFailed(true)
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [props.baseKey, props.variant])
+
+  if (failed || !IconComponent) {
+    return <FallbackIcon label={props.fallbackLabel} size={props.size} />
+  }
+
+  return <IconComponent {...props.iconProps} />
+}
 
 /**
  * Parse a property value from string to appropriate type
@@ -59,65 +135,17 @@ export function getLobeIcon(
   size: number = 20
 ): React.ReactNode {
   if (!iconName || typeof iconName !== 'string') {
-    return (
-      <div
-        className='bg-muted text-muted-foreground flex items-center justify-center rounded-full text-xs font-medium'
-        style={{ width: size, height: size }}
-      >
-        ?
-      </div>
-    )
+    return <FallbackIcon label='?' size={size} />
   }
 
   const trimmedName = iconName.trim()
   if (!trimmedName) {
-    return (
-      <div
-        className='bg-muted text-muted-foreground flex items-center justify-center rounded-full text-xs font-medium'
-        style={{ width: size, height: size }}
-      >
-        ?
-      </div>
-    )
+    return <FallbackIcon label='?' size={size} />
   }
 
   // Parse component path and chained properties
   const segments = trimmedName.split('.')
-  const baseKey = segments[0]
-  const BaseIcon = (LobeIcons as Record<string, unknown>)[baseKey] as
-    | Record<string, unknown>
-    | undefined
-
-  let IconComponent: React.ComponentType<Record<string, unknown>> | undefined
-  let propStartIndex: number
-
-  if (BaseIcon && segments.length > 1 && BaseIcon[segments[1]]) {
-    IconComponent = BaseIcon[segments[1]] as React.ComponentType<
-      Record<string, unknown>
-    >
-    propStartIndex = 2
-  } else {
-    IconComponent = (LobeIcons as Record<string, unknown>)[baseKey] as
-      | React.ComponentType<Record<string, unknown>>
-      | undefined
-    propStartIndex = segments.length > 1 && /^[A-Z]/.test(segments[1]) ? 2 : 1
-  }
-
-  // Fallback if icon not found
-  if (
-    !IconComponent ||
-    (typeof IconComponent !== 'function' && typeof IconComponent !== 'object')
-  ) {
-    const firstLetter = trimmedName.charAt(0).toUpperCase()
-    return (
-      <div
-        className='bg-muted text-muted-foreground flex items-center justify-center rounded-full text-xs font-medium'
-        style={{ width: size, height: size }}
-      >
-        {firstLetter}
-      </div>
-    )
-  }
+  const { baseKey, propStartIndex, variant } = parseIconName(trimmedName)
 
   // Parse chained properties (e.g., "type={'platform'}", "shape='square'")
   const props: Record<string, string | number | boolean> = {}
@@ -142,5 +170,13 @@ export function getLobeIcon(
     props.size = size
   }
 
-  return <IconComponent {...props} />
+  return (
+    <LobeIconRenderer
+      baseKey={baseKey}
+      fallbackLabel={trimmedName.charAt(0).toUpperCase()}
+      iconProps={props}
+      size={size}
+      variant={variant}
+    />
+  )
 }

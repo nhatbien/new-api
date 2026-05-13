@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
 import { useStatus } from '@/hooks/use-status'
 
@@ -86,7 +85,6 @@ function parseHeaderNavModules(
  * }
  */
 export function useTopNavLinks(): TopNavLink[] {
-  const { t } = useTranslation()
   const { status } = useStatus()
   const { auth } = useAuthStore()
 
@@ -104,40 +102,40 @@ export function useTopNavLinks(): TopNavLink[] {
 
   // Home
   if (modules?.home !== false) {
-    links.push({ title: t('Home'), href: '/' })
+    links.push({ title: 'Home', href: '/' })
   }
 
   // Console -> /dashboard (new console path)
   if (modules?.console !== false) {
-    links.push({ title: t('Console'), href: '/dashboard' })
+    links.push({ title: 'Console', href: '/dashboard' })
   }
 
   // Pricing
   const pricing = modules?.pricing
   if (pricing && typeof pricing === 'object' && pricing.enabled) {
     const disabled = pricing.requireAuth && !isAuthed
-    links.push({ title: t('Model Pricing'), href: '/pricing', disabled })
+    links.push({ title: 'Model Pricing', href: '/pricing', disabled })
   }
 
   // Rankings
   const rankings = modules?.rankings
   if (rankings && typeof rankings === 'object' && rankings.enabled) {
     const disabled = rankings.requireAuth && !isAuthed
-    links.push({ title: t('Rankings'), href: '/rankings', disabled })
+    links.push({ title: 'Rankings', href: '/rankings', disabled })
   }
 
   // Docs (supports external links)
   if (modules?.docs !== false) {
     if (docsLink) {
-      links.push({ title: t('Docs'), href: docsLink, external: true })
+      links.push({ title: 'Docs', href: docsLink, external: true })
     } else {
-      links.push({ title: t('Docs'), href: '/docs' })
+      links.push({ title: 'Docs', href: '/docs' })
     }
   }
 
   // About
   if (modules?.about !== false) {
-    links.push({ title: t('About'), href: '/about' })
+    links.push({ title: 'About', href: '/about' })
   }
 
   return links

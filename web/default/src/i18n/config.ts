@@ -17,23 +17,29 @@ export const resources = {
   vi,
 } as const
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'vi',
-    supportedLngs: ['en', 'zh', 'fr', 'ru', 'ja', 'vi'],
-    load: 'languageOnly', // Convert zh-CN -> zh
-    nsSeparator: false, // Allow literal colons in keys (e.g., URLs, labels)
-    debug: process.env.NODE_ENV === 'development',
-    interpolation: {
-      escapeValue: false, // not needed for react as it escapes by default
-    },
-    detection: {
-      order: ['localStorage'],
-      caches: ['localStorage'],
-    },
-  })
+if (!i18n.isInitialized) {
+  i18n
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+      resources,
+      fallbackLng: 'vi',
+      supportedLngs: ['en', 'zh', 'fr', 'ru', 'ja', 'vi'],
+      initAsync: false,
+      load: 'languageOnly', // Convert zh-CN -> zh
+      nsSeparator: false, // Allow literal colons in keys (e.g., URLs, labels)
+      saveMissing: false,
+      updateMissing: false,
+      saveMissingTo: 'fallback',
+      debug: process.env.NODE_ENV === 'development',
+      interpolation: {
+        escapeValue: false, // not needed for react as it escapes by default
+      },
+      detection: {
+        order: ['localStorage'],
+        caches: ['localStorage'],
+      },
+    })
+}
 
 export default i18n

@@ -31,6 +31,7 @@ import {
   processThinkTags,
   processIncompleteThinkTags,
 } from '../../helpers';
+import { authHeader } from '../../helpers/auth';
 
 export const useApiRequest = (
   setMessage,
@@ -190,6 +191,7 @@ export const useApiRequest = (
           headers: {
             'Content-Type': 'application/json',
             'New-Api-User': getUserIdFromLocalStorage(),
+            ...authHeader(),
           },
           body: JSON.stringify(payload),
         });
@@ -317,6 +319,7 @@ export const useApiRequest = (
         headers: {
           'Content-Type': 'application/json',
           'New-Api-User': getUserIdFromLocalStorage(),
+          ...authHeader(),
         },
         method: 'POST',
         payload: JSON.stringify(payload),

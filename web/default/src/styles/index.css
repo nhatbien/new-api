@@ -558,10 +558,23 @@
   animation: terminal-demo-pulse 1.5s ease-in-out infinite;
 }
 
+@keyframes dashboard-preview-shine {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+.dashboard-preview-shine {
+  animation: dashboard-preview-shine 3.2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .terminal-demo-blink,
   .terminal-demo-spin,
-  .terminal-demo-pulse {
+  .terminal-demo-pulse,
+  .dashboard-preview-shine {
     animation: none !important;
   }
 }

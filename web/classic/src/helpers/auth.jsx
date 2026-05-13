@@ -22,11 +22,11 @@ import { Navigate } from 'react-router-dom';
 import { history } from './history';
 
 export function authHeader() {
-  // return authorization header with jwt token
   let user = JSON.parse(localStorage.getItem('user'));
 
-  if (user && user.token) {
-    return { Authorization: 'Bearer ' + user.token };
+  const accessToken = user?.access_token || user?.token;
+  if (accessToken) {
+    return { Authorization: accessToken };
   } else {
     return {};
   }

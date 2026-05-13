@@ -9,6 +9,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/service"
 	passkeysvc "github.com/QuantumNous/new-api/service/passkey"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 
@@ -482,12 +483,7 @@ func PasskeyVerifyFinish(c *gin.Context) {
 		return
 	}
 
-	session := sessions.Default(c)
-	// Mark passkey as ready; /api/verify will convert this into the final secure verification session.
-	session.Set(PasskeyReadySessionKey, time.Now().Unix())
-	session.Delete(SecureVerificationSessionKey)
-	session.Delete(secureVerificationMethodSessionKey)
-	if err := session.Save(); err != nil {
+	if _, err := service.SetPasskeyReady(c, PasskeyReadySessionKey, SecureVerificationSessionKey, secureVerificationMethodSessionKey, PasskeyReadyTimeout); err != nil {
 		common.ApiError(c, fmt.Errorf("failed to save verification state: %v", err))
 		return
 	}
@@ -501,12 +497,16 @@ func PasskeyVerifyFinish(c *gin.Context) {
 func getSessionUser(c *gin.Context) (*model.User, error) {
 	session := sessions.Default(c)
 	idRaw := session.Get("id")
-	if idRaw == nil {
-		return nil, errors.New("not logged in")
+	id := c.GetInt("id")
+	if idRaw != nil {
+		sessionID, ok := idRaw.(int)
+		if !ok {
+			return nil, errors.New("invalid session information")
+		}
+		id = sessionID
 	}
-	id, ok := idRaw.(int)
-	if !ok {
-		return nil, errors.New("invalid session information")
+	if id == 0 {
+		return nil, errors.New("not logged in")
 	}
 	user := &model.User{Id: id}
 	if err := user.FillUserById(); err != nil {
@@ -557,17 +557,13 @@ func requirePasskeyDeleteVerification(c *gin.Context, userID int) bool {
 }
 
 func requireSecureVerificationMethod(c *gin.Context, method string) bool {
-	session := sessions.Default(c)
-	verifiedAt, ok := session.Get(SecureVerificationSessionKey).(int64)
-	if !ok || time.Now().Unix()-verifiedAt >= SecureVerificationTimeout {
-		session.Delete(SecureVerificationSessionKey)
-		session.Delete(secureVerificationMethodSessionKey)
-		_ = session.Save()
+	_, verifiedMethod, ok, err := service.GetSecureVerification(c, SecureVerificationSessionKey, secureVerificationMethodSessionKey, SecureVerificationTimeout)
+	if err != nil || !ok {
 		common.ApiErrorMsg(c, "please complete security verification first")
 		return false
 	}
 
-	if verifiedMethod, ok := session.Get(secureVerificationMethodSessionKey).(string); !ok || verifiedMethod != method {
+	if verifiedMethod != method {
 		common.ApiErrorMsg(c, "please complete the corresponding security verification first")
 		return false
 	}

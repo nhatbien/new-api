@@ -3,11 +3,10 @@ package controller
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
-	"github.com/gin-contrib/sessions"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -143,37 +142,9 @@ func UniversalVerify(c *gin.Context) {
 }
 
 func setSecureVerificationSession(c *gin.Context, method string) (int64, error) {
-	session := sessions.Default(c)
-	session.Delete(PasskeyReadySessionKey)
-	now := time.Now().Unix()
-	session.Set(SecureVerificationSessionKey, now)
-	session.Set(secureVerificationMethodSessionKey, method)
-	if err := session.Save(); err != nil {
-		return 0, err
-	}
-	return now, nil
+	return service.SetSecureVerification(c, SecureVerificationSessionKey, secureVerificationMethodSessionKey, PasskeyReadySessionKey, method, SecureVerificationTimeout)
 }
 
 func consumePasskeyReady(c *gin.Context) (bool, error) {
-	session := sessions.Default(c)
-	readyAtRaw := session.Get(PasskeyReadySessionKey)
-	if readyAtRaw == nil {
-		return false, nil
-	}
-
-	readyAt, ok := readyAtRaw.(int64)
-	if !ok {
-		session.Delete(PasskeyReadySessionKey)
-		_ = session.Save()
-		return false, fmt.Errorf("invalid Passkey verification state")
-	}
-	session.Delete(PasskeyReadySessionKey)
-	if err := session.Save(); err != nil {
-		return false, err
-	}
-	// Expired ready markers cannot be reused.
-	if time.Now().Unix()-readyAt >= PasskeyReadyTimeout {
-		return false, nil
-	}
-	return true, nil
+	return service.ConsumePasskeyReady(c, PasskeyReadySessionKey, PasskeyReadyTimeout)
 }

@@ -94,8 +94,14 @@ func authHelper(c *gin.Context, minRole int) {
 			return
 		}
 	}
-	// get header New-Api-User
-	apiUserIdStr := c.Request.Header.Get("New-Api-User")
+	// For access-token auth, the token already identifies the user. Do not let a
+	// stale or mismatched New-Api-User header override the token owner.
+	apiUserIdStr := ""
+	if useAccessToken {
+		apiUserIdStr = fmt.Sprintf("%v", id)
+	} else {
+		apiUserIdStr = c.Request.Header.Get("New-Api-User")
+	}
 	if apiUserIdStr == "" {
 		apiUserIdStr = fmt.Sprintf("%v", id)
 	}
