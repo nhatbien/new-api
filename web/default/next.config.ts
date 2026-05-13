@@ -2,6 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   // SSR enabled for homepage; dashboard remains client-side only
+  output: 'standalone',
   trailingSlash: true,
   env: {
     NEXT_PUBLIC_REACT_APP_SERVER_URL:

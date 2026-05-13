@@ -15,11 +15,24 @@ COPY VERSION ./
 
 RUN NEXT_PUBLIC_APP_VERSION=$(cat VERSION) bun run build
 
-FROM nginx:1.27-alpine
+FROM node:20-alpine AS runner
 
-COPY deploy/nginx/frontend.conf.template /etc/nginx/templates/default.conf.template
-COPY deploy/nginx/docker-entrypoint.d/40-frontend-env.sh /docker-entrypoint.d/40-frontend-env.sh
-COPY --from=builder /build/out /usr/share/nginx/html
-RUN chmod +x /docker-entrypoint.d/40-frontend-env.sh
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=80 \
+    HOSTNAME=0.0.0.0
+
+# Next.js standalone output bundles only the files needed at runtime.
+COPY --from=builder /build/.next/standalone ./
+COPY --from=builder /build/.next/static ./.next/static
+COPY --from=builder /build/public ./public
+
+COPY deploy/nginx/docker-entrypoint.d/40-frontend-env.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["node", "server.js"]
