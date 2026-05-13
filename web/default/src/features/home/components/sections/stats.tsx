@@ -90,7 +90,7 @@ export function Stats(_props: StatsProps) {
     <div className='relative z-10'>
       <div className='mx-auto max-w-6xl px-6 py-12 md:py-20'>
         <div className='bg-muted/30 border-border/40 grid grid-cols-2 divide-y divide-x overflow-hidden rounded-3xl border md:grid-cols-4 md:divide-y-0'>
-          {stats.map((s, i) => (
+          {stats.map((s) => (
             <div
               key={s.label}
               className='hover:bg-muted/50 flex flex-col items-center p-8 text-center transition-colors duration-300 md:p-12'

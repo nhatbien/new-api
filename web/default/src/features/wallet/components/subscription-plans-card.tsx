@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Crown, RefreshCw, Sparkles, Check, ChevronRight } from 'lucide-react'
+import { Check, Crown, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { formatQuotaUSD } from '@/lib/format'
@@ -17,17 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import {
-  StatusBadge,
-  dotColorMap,
-  textColorMap,
-} from '@/components/status-badge'
 import {
   getPublicPlans,
   getSelfSubscriptionFull,
@@ -434,7 +423,6 @@ export function SubscriptionPlansCard({
             {plans.map((p, index) => {
               const plan = p?.plan
               if (!plan) return null
-              const totalAmount = Number(plan.total_amount || 0)
               const estimatedTotalQuota = estimatePlanTotalQuota(plan)
               const price = Number(plan.price_amount || 0).toFixed(2)
               const isPopular = index === 1 || plans.length === 1

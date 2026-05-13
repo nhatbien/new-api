@@ -28,6 +28,7 @@ export interface AuthUser {
   linux_do_id?: string
   setting?: Record<string, unknown> | string
   stripe_customer?: string
+  access_token?: string
   sidebar_modules?: string
   permissions?: UserPermissions
 }
@@ -35,7 +36,9 @@ export interface AuthUser {
 interface AuthState {
   auth: {
     user: AuthUser | null
+    accessToken: string | null
     setUser: (user: AuthUser | null) => void
+    setAccessToken: (token: string | null) => void
     reset: () => void
   }
 }
@@ -56,10 +59,23 @@ export const useAuthStore = create<AuthState>()((set) => {
     }
     return null
   })()
+  const initAccessToken = (() => {
+    try {
+      if (typeof window !== 'undefined') {
+        return window.localStorage.getItem('access_token')
+      }
+    } catch {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('access_token')
+      }
+    }
+    return null
+  })()
 
   return {
     auth: {
       user: initUser,
+      accessToken: initAccessToken,
       setUser: (user) =>
         set((state) => {
           // Persist user to localStorage
@@ -72,14 +88,26 @@ export const useAuthStore = create<AuthState>()((set) => {
           }
           return { ...state, auth: { ...state.auth, user } }
         }),
+      setAccessToken: (token) =>
+        set((state) => {
+          if (typeof window !== 'undefined') {
+            if (token) {
+              window.localStorage.setItem('access_token', token)
+            } else {
+              window.localStorage.removeItem('access_token')
+            }
+          }
+          return { ...state, auth: { ...state.auth, accessToken: token } }
+        }),
       reset: () =>
         set((state) => {
           if (typeof window !== 'undefined') {
             window.localStorage.removeItem('user')
+            window.localStorage.removeItem('access_token')
           }
           return {
             ...state,
-            auth: { ...state.auth, user: null },
+            auth: { ...state.auth, user: null, accessToken: null },
           }
         }),
     },

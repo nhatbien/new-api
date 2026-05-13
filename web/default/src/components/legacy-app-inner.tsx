@@ -1,5 +1,6 @@
-import { StrictMode } from 'react'
-import ReactDOM from 'react-dom/client'
+'use client'
+
+import { useEffect } from 'react'
 import { AxiosError } from 'axios'
 import {
   QueryCache,
@@ -14,44 +15,38 @@ import { getStatus } from '@/lib/api'
 import '@/lib/dayjs'
 import { applyFaviconToDom } from '@/lib/dom-utils'
 import { handleServerError } from '@/lib/handle-server-error'
-import { DirectionProvider } from './context/direction-provider'
-import { FontProvider } from './context/font-provider'
-import { ThemeProvider } from './context/theme-provider'
-import './i18n/config'
-// Generated Routes
-import { routeTree } from './routeTree.gen'
-// Styles
-import './styles/index.css'
+import { DirectionProvider } from '@/context/direction-provider'
+import { FontProvider } from '@/context/font-provider'
+import { ThemeProvider } from '@/context/theme-provider'
+import '@/i18n/config'
+import { routeTree } from '@/routeTree.gen'
 
-// Ensure VChart theme is initialized before any chart mounts (prevents white default theme flash)
-// VChart theme is driven by our ThemeProvider (html.light/html.dark) via per-chart `theme` prop.
+const isDevelopment = process.env.NODE_ENV === 'development'
+const isProduction = process.env.NODE_ENV === 'production'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
-        // eslint-disable-next-line no-console
-        if (process.env.NODE_ENV === 'development') console.log({ failureCount, error })
+        if (isDevelopment) console.log({ failureCount, error })
 
-        if (failureCount >= 0 && process.env.NODE_ENV === 'development') return false
-        if (failureCount > 3 && process.env.NODE_ENV === 'production') return false
+        if (failureCount >= 0 && isDevelopment) return false
+        if (failureCount > 3 && isProduction) return false
 
         return !(
           error instanceof AxiosError &&
           [401, 403].includes(error.response?.status ?? 0)
         )
       },
-      refetchOnWindowFocus: process.env.NODE_ENV === 'production',
-      staleTime: 10 * 1000, // 10s
+      refetchOnWindowFocus: isProduction,
+      staleTime: 10 * 1000,
     },
     mutations: {
       onError: (error) => {
         handleServerError(error)
 
-        if (error instanceof AxiosError) {
-          if (error.response?.status === 304) {
-            toast.error(i18next.t('Content not modified!'))
-          }
+        if (error instanceof AxiosError && error.response?.status === 304) {
+          toast.error(i18next.t('Content not modified!'))
         }
       },
     },
@@ -74,27 +69,19 @@ const queryClient = new QueryClient({
   }),
 })
 
-// Create a new router instance
 const router = createRouter({
   routeTree,
   context: { queryClient },
-  // TanStack Router 1.168.x can throw an internal `_nonReactive` preload
-  // error when intent preloading races with redirects or failed guard requests.
-  // Keep route loading navigation-driven until the upstream issue is fixed.
   defaultPreload: false,
 })
 
-// Register the router instance for type safety
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
   }
 }
 
-// Render the app
-const rootElement = document.getElementById('root')!
-// Set document.title and favicon from cached status, then refresh from network
-;(function initSystemBranding() {
+function initSystemBranding() {
   try {
     if (typeof window === 'undefined' || typeof document === 'undefined') return
     const apply = (name: string) => {
@@ -104,7 +91,7 @@ const rootElement = document.getElementById('root')!
       ) as HTMLMetaElement | null
       if (metaTitle) metaTitle.setAttribute('content', name)
     }
-    // Cache-first
+
     try {
       const saved = localStorage.getItem('status')
       if (saved) {
@@ -115,7 +102,7 @@ const rootElement = document.getElementById('root')!
     } catch {
       /* empty */
     }
-    // Background refresh
+
     getStatus()
       .then((s) => {
         if (s?.system_name) {
@@ -134,20 +121,22 @@ const rootElement = document.getElementById('root')!
   } catch {
     /* empty */
   }
-})()
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <FontProvider>
-            <DirectionProvider>
-              <RouterProvider router={router} />
-            </DirectionProvider>
-          </FontProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </StrictMode>
+}
+
+export function LegacyApp() {
+  useEffect(() => {
+    initSystemBranding()
+  }, [])
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <FontProvider>
+          <DirectionProvider>
+            <RouterProvider router={router} />
+          </DirectionProvider>
+        </FontProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   )
 }

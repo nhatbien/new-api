@@ -86,9 +86,7 @@ export function mapStatusDataToConfig(
 
 // Fetch system config from API
 async function fetchSystemConfig(): Promise<Partial<SystemConfig>> {
-  const response = await fetch(getApiUrl('/api/status'), {
-    credentials: 'include',
-  })
+  const response = await fetch(getApiUrl('/api/status'))
   if (!response.ok) throw new Error('Failed to fetch status')
 
   const data: StatusApiResponse = await response.json()

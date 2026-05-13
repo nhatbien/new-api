@@ -75,7 +75,11 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
     try {
       // Remove all hyphens from backup code before sending to backend
       const code = useBackupCode ? cleanBackupCode(data.otp) : data.otp
-      const res = await login2fa({ code })
+      const pendingUserId =
+        typeof window !== 'undefined'
+          ? Number(window.sessionStorage.getItem('pending_2fa_user_id') || 0)
+          : 0
+      const res = await login2fa({ code, user_id: pendingUserId || undefined })
 
       if (!res.success) {
         toast.error(res.message || t('Invalid code'))
@@ -86,6 +90,12 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
       const userData = res.data
       if (!userData) {
         throw new Error('No user data received from login')
+      }
+      if (userData.access_token) {
+        auth.setAccessToken(userData.access_token)
+      }
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem('pending_2fa_user_id')
       }
 
       // Update auth store

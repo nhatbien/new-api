@@ -226,7 +226,6 @@ export function OllamaModelsDialog({
     try {
       const response = await fetch(getApiUrl('/api/channel/ollama/pull/stream'), {
         method: 'POST',
-        credentials: 'include',
         headers: {
           ...getCommonHeaders(),
           Accept: 'text/event-stream',

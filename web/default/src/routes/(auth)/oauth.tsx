@@ -19,7 +19,12 @@ function OAuthComponent() {
     ;(async () => {
       try {
         if (search?.provider === 'wechat' && search.code) {
-          await wechatLoginByCode(search.code)
+          const loginRes = await wechatLoginByCode(search.code)
+          const accessToken = (loginRes?.data as AuthUser | undefined)
+            ?.access_token
+          if (accessToken) {
+            useAuthStore.getState().auth.setAccessToken(accessToken)
+          }
         }
         const res = await getSelf()
         if (res?.success) {

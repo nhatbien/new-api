@@ -23,7 +23,7 @@ function RootComponent() {
       <NavigationProgress />
       <Outlet />
       <Toaster duration={5000} />
-      {import.meta.env.MODE === 'development' && (
+      {process.env.NODE_ENV === 'development' && (
         <>
           <ReactQueryDevtools buttonPosition='bottom-left' />
           <TanStackRouterDevtools position='bottom-right' />
@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{
     // 只检查 setup 状态（如果需要）
     if (needsSetupCheck) {
       const status = await getSetupStatus().catch((error) => {
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV === 'development') {
           // eslint-disable-next-line no-console
           console.warn('[root.beforeLoad] setup status check failed', error)
         }

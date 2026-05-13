@@ -5,7 +5,7 @@ import { getSetupStatus } from '@/features/setup/api'
 export const Route = createFileRoute('/setup/')({
   beforeLoad: async () => {
     const status = await getSetupStatus().catch((error) => {
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV === 'development') {
         // eslint-disable-next-line no-console
         console.warn('[setup.beforeLoad] failed to fetch setup status', error)
       }

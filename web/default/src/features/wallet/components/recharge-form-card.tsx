@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Gift, ExternalLink, Loader2, Receipt, WalletCards, ChevronRight } from 'lucide-react'
+import { ChevronRight, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatPaymentLocalCurrencyAmount } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -44,10 +43,10 @@ interface RechargeFormCardProps {
   calculating: boolean
   onPaymentMethodSelect: (method: PaymentMethod) => void
   paymentLoading: string | null
-  redemptionCode: string
-  onRedemptionCodeChange: (code: string) => void
-  onRedeem: () => void
-  redeeming: boolean
+  redemptionCode?: string
+  onRedemptionCodeChange?: (code: string) => void
+  onRedeem?: () => void
+  redeeming?: boolean
   topupLink?: string
   loading?: boolean
   priceRatio?: number
@@ -75,11 +74,11 @@ export function RechargeFormCard({
   calculating,
   onPaymentMethodSelect,
   paymentLoading,
-  redemptionCode,
-  onRedemptionCodeChange,
-  onRedeem,
-  redeeming,
-  topupLink,
+  redemptionCode: _redemptionCode,
+  onRedemptionCodeChange: _onRedemptionCodeChange,
+  onRedeem: _onRedeem,
+  redeeming: _redeeming,
+  topupLink: _topupLink,
   loading,
   priceRatio = 1,
   usdExchangeRate = 1,

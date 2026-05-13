@@ -28,7 +28,7 @@ export function useStatus() {
           setConfig(mapStatusDataToConfig(status))
         }
       } catch (err) {
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV === 'development') {
           // eslint-disable-next-line no-console
           console.warn(
             '[useStatus] Failed to sync status to system config',

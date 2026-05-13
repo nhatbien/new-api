@@ -108,7 +108,7 @@ export function safeJsonParse<T = unknown>(
     return JSON.parse(trimmedValue) as T
   } catch (error) {
     // Log error for debugging in development
-    if (import.meta.env.DEV && !silent) {
+    if (process.env.NODE_ENV === 'development' && !silent) {
       const message = context
         ? `Failed to parse ${context}`
         : 'Invalid JSON format'
@@ -135,7 +135,7 @@ export function safeJsonParseWithValidation<T>(
 
   if (!validator(parsed)) {
     // Log error for debugging in development
-    if (import.meta.env.DEV && !silent) {
+    if (process.env.NODE_ENV === 'development' && !silent) {
       const message =
         validatorMessage ??
         (context ? `Invalid ${context} structure` : 'Invalid data structure')

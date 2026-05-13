@@ -19,7 +19,8 @@ type Setup2FARequest struct {
 
 // Verify2FARequest 验证2FA请求结构
 type Verify2FARequest struct {
-	Code string `json:"code" binding:"required"`
+	Code   string `json:"code" binding:"required"`
+	UserId int    `json:"user_id"`
 }
 
 // Setup2FAResponse 设置2FA响应结构
@@ -405,23 +406,26 @@ func Verify2FALogin(c *gin.Context) {
 		return
 	}
 
-	// 从会话中获取pending用户信息
+	userId := req.UserId
 	session := sessions.Default(c)
-	pendingUserId := session.Get("pending_user_id")
-	if pendingUserId == nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "Session has expired, please log in again",
-		})
-		return
-	}
-	userId, ok := pendingUserId.(int)
-	if !ok {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "Invalid session data, please log in again",
-		})
-		return
+	if userId == 0 {
+		pendingUserId := session.Get("pending_user_id")
+		if pendingUserId == nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "Login challenge has expired, please log in again",
+			})
+			return
+		}
+		var ok bool
+		userId, ok = pendingUserId.(int)
+		if !ok {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "Invalid login challenge, please log in again",
+			})
+			return
+		}
 	}
 	// 获取用户信息
 	user, err := model.GetUserById(userId, false)

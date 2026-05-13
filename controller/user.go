@@ -78,6 +78,7 @@ func Login(c *gin.Context) {
 			"success": true,
 			"data": map[string]interface{}{
 				"require_2fa": true,
+				"user_id":     user.Id,
 			},
 		})
 		return
@@ -89,13 +90,19 @@ func Login(c *gin.Context) {
 // setup session & cookies and then return user info
 func setupLogin(user *model.User, c *gin.Context) {
 	model.UpdateUserLastLoginAt(user.Id)
+	accessToken, err := ensureAccessToken(user)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+
 	session := sessions.Default(c)
 	session.Set("id", user.Id)
 	session.Set("username", user.Username)
 	session.Set("role", user.Role)
 	session.Set("status", user.Status)
 	session.Set("group", user.Group)
-	err := session.Save()
+	err = session.Save()
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgUserSessionSaveFailed)
 		return
@@ -110,8 +117,34 @@ func setupLogin(user *model.User, c *gin.Context) {
 			"role":         user.Role,
 			"status":       user.Status,
 			"group":        user.Group,
+			"access_token": accessToken,
 		},
 	})
+}
+
+func ensureAccessToken(user *model.User) (string, error) {
+	if user.GetAccessToken() != "" {
+		return user.GetAccessToken(), nil
+	}
+
+	for i := 0; i < 5; i++ {
+		randI := common.GetRandomInt(4)
+		key, err := common.GenerateRandomKey(29 + randI)
+		if err != nil {
+			common.SysLog("failed to generate access token: " + err.Error())
+			return "", err
+		}
+		if model.DB.Where("access_token = ?", key).First(&model.User{}).RowsAffected != 0 {
+			continue
+		}
+		user.SetAccessToken(key)
+		if err := model.DB.Model(user).Update("access_token", key).Error; err != nil {
+			return "", err
+		}
+		return key, nil
+	}
+
+	return "", errors.New("failed to generate unique access token")
 }
 
 func Logout(c *gin.Context) {

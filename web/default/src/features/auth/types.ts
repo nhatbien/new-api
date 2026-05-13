@@ -12,6 +12,7 @@ export interface LoginPayload {
 
 export interface TwoFAPayload {
   code: string
+  user_id?: number
 }
 
 export interface RegisterPayload {
@@ -47,14 +48,21 @@ export interface LoginResponse {
   message: string
   data?: {
     require_2fa?: boolean
+    user_id?: number
+    access_token?: string
     id?: number
+    username?: string
+    display_name?: string
+    role?: number
+    status?: number
+    group?: string
   }
 }
 
 export interface Login2FAResponse {
   success: boolean
   message: string
-  data?: User
+  data?: User & { access_token?: string }
 }
 
 export interface ApiResponse {

@@ -7,6 +7,7 @@ declare global {
   interface Window {
     __APP_CONFIG__?: {
       VITE_REACT_APP_SERVER_URL?: string
+      NEXT_PUBLIC_REACT_APP_SERVER_URL?: string
     }
   }
 }
@@ -17,18 +18,30 @@ declare global {
 
 // Base URL: empty string for same-origin API requests, or set
 // VITE_REACT_APP_SERVER_URL to call a separated backend directly.
+function normalizeServerURL(value: string | undefined): string | undefined {
+  const normalized = value?.trim().replace(/\/$/, '')
+  return normalized || undefined
+}
+
 const runtimeServerURL =
+  typeof window !== 'undefined' &&
   window.__APP_CONFIG__ &&
   Object.prototype.hasOwnProperty.call(
     window.__APP_CONFIG__,
     'VITE_REACT_APP_SERVER_URL'
   )
-    ? window.__APP_CONFIG__.VITE_REACT_APP_SERVER_URL
-    : undefined
+    ? normalizeServerURL(window.__APP_CONFIG__.VITE_REACT_APP_SERVER_URL)
+    : typeof window !== 'undefined' &&
+        window.__APP_CONFIG__ &&
+        Object.prototype.hasOwnProperty.call(
+          window.__APP_CONFIG__,
+          'NEXT_PUBLIC_REACT_APP_SERVER_URL'
+        )
+      ? normalizeServerURL(window.__APP_CONFIG__.NEXT_PUBLIC_REACT_APP_SERVER_URL)
+      : undefined
 
-export const baseURL = (
-  runtimeServerURL ?? import.meta.env.VITE_REACT_APP_SERVER_URL ?? ''
-).replace(/\/$/, '')
+export const baseURL =
+  runtimeServerURL ?? normalizeServerURL(process.env.NEXT_PUBLIC_REACT_APP_SERVER_URL) ?? ''
 
 export function getApiUrl(path: string): string {
   if (!baseURL) return path
@@ -44,7 +57,7 @@ function normalizeRequestUrl(url?: string): string | undefined {
 // Create axios instance with default config
 export const api = axios.create({
   baseURL,
-  withCredentials: true, // Include cookies in cross-origin requests
+  withCredentials: false,
 })
 
 // ============================================================================
@@ -135,6 +148,13 @@ export function getCommonHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
+  const { accessToken, user } = useAuthStore.getState().auth
+  if (accessToken) {
+    headers.Authorization = accessToken
+  }
+  if (user?.id) {
+    headers['New-Api-User'] = String(user.id)
+  }
 
   return headers
 }
@@ -146,6 +166,13 @@ export function getCommonHeaders(): Record<string, string> {
 // Attach user ID header for all requests
 api.interceptors.request.use((config) => {
   config.url = normalizeRequestUrl(config.url)
+  const { accessToken, user } = useAuthStore.getState().auth
+  if (accessToken) {
+    config.headers.Authorization = accessToken
+  }
+  if (user?.id) {
+    config.headers['New-Api-User'] = String(user.id)
+  }
   return config
 })
 

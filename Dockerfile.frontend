@@ -4,8 +4,7 @@ WORKDIR /build
 
 ARG VITE_REACT_APP_SERVER_URL
 ENV VITE_REACT_APP_SERVER_URL=${VITE_REACT_APP_SERVER_URL}
-ARG BACKEND_URL=http://new-api:3000
-ENV BACKEND_URL=${BACKEND_URL}
+ENV NEXT_PUBLIC_REACT_APP_SERVER_URL=${VITE_REACT_APP_SERVER_URL}
 
 COPY web/default/package.json ./
 COPY web/default/bun.lock ./
@@ -14,13 +13,13 @@ RUN bun install
 COPY web/default ./
 COPY VERSION ./
 
-RUN VITE_REACT_APP_VERSION=$(cat VERSION) bun run build
+RUN NEXT_PUBLIC_APP_VERSION=$(cat VERSION) bun run build
 
 FROM nginx:1.27-alpine
 
 COPY deploy/nginx/frontend.conf.template /etc/nginx/templates/default.conf.template
 COPY deploy/nginx/docker-entrypoint.d/40-frontend-env.sh /docker-entrypoint.d/40-frontend-env.sh
-COPY --from=builder /build/dist /usr/share/nginx/html
+COPY --from=builder /build/out /usr/share/nginx/html
 RUN chmod +x /docker-entrypoint.d/40-frontend-env.sh
 
 EXPOSE 80

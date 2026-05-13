@@ -24,6 +24,9 @@ func CORS() gin.HandlerFunc {
 			allowedOrigins[frontendBaseUrl] = struct{}{}
 		}
 		allowOrigin = func(origin string) bool {
+			if isLocalDevCorsOrigin(origin) {
+				return true
+			}
 			_, ok := allowedOrigins[normalizeCorsOrigin(origin)]
 			return ok
 		}
@@ -90,6 +93,23 @@ func getFrontendBaseUrls() []string {
 
 func isValidCorsOrigin(origin string) bool {
 	return normalizeCorsOrigin(origin) != ""
+}
+
+func isLocalDevCorsOrigin(origin string) bool {
+	if strings.EqualFold(os.Getenv("CORS_ALLOW_LOCALHOST"), "false") {
+		return false
+	}
+
+	parsed, err := url.Parse(origin)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return false
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return false
+	}
+
+	hostname := strings.ToLower(parsed.Hostname())
+	return hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1"
 }
 
 func normalizeCorsOrigin(origin string) string {

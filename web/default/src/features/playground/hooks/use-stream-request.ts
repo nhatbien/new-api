@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { SSE } from 'sse.js'
-import { getCommonHeaders } from '@/lib/api'
+import { getApiUrl, getCommonHeaders } from '@/lib/api'
 import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants'
 import type { ChatCompletionRequest, ChatCompletionChunk } from '../types'
 
@@ -18,7 +18,7 @@ export function useStreamRequest() {
       onComplete: () => void,
       onError: (error: string, errorCode?: string) => void
     ) => {
-      const source = new SSE(API_ENDPOINTS.CHAT_COMPLETIONS, {
+      const source = new SSE(getApiUrl(API_ENDPOINTS.CHAT_COMPLETIONS), {
         headers: getCommonHeaders(),
         method: 'POST',
         payload: JSON.stringify(payload),

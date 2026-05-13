@@ -167,6 +167,11 @@ function OAuthCallback() {
           }
           // Otherwise it's a login, use payload user if available
           if (loginUser) {
+            if (loginUser.access_token) {
+              useAuthStore.getState().auth.setAccessToken(
+                loginUser.access_token
+              )
+            }
             useAuthStore.getState().auth.setUser(loginUser)
             try {
               if (typeof window !== 'undefined' && loginUser.id != null) {

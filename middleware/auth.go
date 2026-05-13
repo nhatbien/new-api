@@ -39,6 +39,7 @@ func authHelper(c *gin.Context, minRole int) {
 	role := session.Get("role")
 	id := session.Get("id")
 	status := session.Get("status")
+	group := session.Get("group")
 	useAccessToken := false
 	if username == nil {
 		// Check access token
@@ -82,6 +83,7 @@ func authHelper(c *gin.Context, minRole int) {
 			role = user.Role
 			id = user.Id
 			status = user.Status
+			group = user.Group
 			useAccessToken = true
 		} else {
 			c.JSON(http.StatusOK, gin.H{
@@ -94,7 +96,7 @@ func authHelper(c *gin.Context, minRole int) {
 	}
 	// get header New-Api-User
 	apiUserIdStr := c.Request.Header.Get("New-Api-User")
-	if apiUserIdStr == "" && !useAccessToken {
+	if apiUserIdStr == "" {
 		apiUserIdStr = fmt.Sprintf("%v", id)
 	}
 	if apiUserIdStr == "" {
@@ -152,8 +154,8 @@ func authHelper(c *gin.Context, minRole int) {
 	c.Set("username", username)
 	c.Set("role", role)
 	c.Set("id", id)
-	c.Set("group", session.Get("group"))
-	c.Set("user_group", session.Get("group"))
+	c.Set("group", group)
+	c.Set("user_group", group)
 	c.Set("use_access_token", useAccessToken)
 
 	c.Next()
@@ -165,6 +167,21 @@ func TryUserAuth() func(c *gin.Context) {
 		id := session.Get("id")
 		if id != nil {
 			c.Set("id", id)
+			c.Next()
+			return
+		}
+
+		accessToken := c.Request.Header.Get("Authorization")
+		if accessToken != "" {
+			user, err := model.ValidateAccessToken(accessToken)
+			if err == nil && user != nil && user.Status == common.UserStatusEnabled {
+				c.Set("id", user.Id)
+				c.Set("username", user.Username)
+				c.Set("role", user.Role)
+				c.Set("group", user.Group)
+				c.Set("user_group", user.Group)
+				c.Set("use_access_token", true)
+			}
 		}
 		c.Next()
 	}
