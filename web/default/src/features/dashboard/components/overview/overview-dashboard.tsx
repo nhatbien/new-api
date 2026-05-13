@@ -221,26 +221,26 @@ function StartStepItem(props: {
 
       <Link
         to={props.step.to}
-        className='bg-background/70 hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left shadow-xs transition-colors outline-none focus-visible:ring-2'
+        className='bg-background/70 hover:bg-background border shadow-xs/50 focus-visible:ring-ring flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left shadow-xs transition-colors outline-none focus-visible:ring-2'
       >
         <span className='flex min-w-0 items-start gap-2.5'>
-          <span className='bg-muted mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg'>
+          <span className='bg-white border-primary/20 text-primary mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg border shadow-xs'>
             <Icon className='size-3.5' aria-hidden='true' />
           </span>
           <span className='flex min-w-0 flex-col gap-0.5'>
-            <span className='flex items-center gap-2 text-sm font-medium'>
-              <span className='text-muted-foreground font-mono text-xs tabular-nums'>
+            <span className='flex items-center gap-2 text-sm font-bold'>
+              <span className='text-primary font-mono text-xs tabular-nums'>
                 {props.index + 1}.
               </span>
               <span className='truncate'>{props.step.title}</span>
             </span>
-            <span className='text-muted-foreground line-clamp-1 text-xs'>
+            <span className='text-foreground font-medium line-clamp-1 text-xs'>
               {props.step.description}
             </span>
           </span>
         </span>
         <ArrowRight
-          className='text-muted-foreground size-4 shrink-0'
+          className='text-foreground font-medium size-4 shrink-0'
           aria-hidden='true'
         />
       </Link>
@@ -279,14 +279,14 @@ function RequestPreview(props: {
 
       <div className='flex items-center justify-between gap-3 border-b pb-3'>
         <div className='flex min-w-0 items-center gap-2'>
-          <span className='bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg'>
+          <span className='bg-white border-primary/20 text-primary flex size-8 shrink-0 items-center justify-center rounded-lg border shadow-xs'>
             <TerminalSquare className='size-4' aria-hidden='true' />
           </span>
           <div className='min-w-0'>
             <div className='truncate text-sm font-medium'>
               {t('First API request')}
             </div>
-            <div className='text-muted-foreground truncate text-xs'>
+            <div className='text-foreground font-medium truncate text-xs'>
               {props.example.ready
                 ? props.example.keyName
                 : t('Create an API key to unlock the real request')}
@@ -322,7 +322,7 @@ function RequestPreview(props: {
           {previewLines.map((line, index) => (
             <code
               key={`${line}-${index}`}
-              className='text-muted-foreground truncate'
+              className='text-foreground font-medium truncate'
               title={line}
             >
               {line}
@@ -338,18 +338,18 @@ function RequestPreview(props: {
           return (
             <div
               key={signal.label}
-              className='bg-muted/40 flex items-center justify-between gap-3 rounded-xl px-3 py-2'
+              className='bg-white border-primary/10 flex items-center justify-between gap-3 rounded-xl border px-3 py-2 shadow-xs'
             >
               <span className='flex min-w-0 items-center gap-2'>
                 <Icon
-                  className='text-muted-foreground size-3.5 shrink-0'
+                  className='text-primary size-3.5 shrink-0'
                   aria-hidden='true'
                 />
-                <span className='truncate text-xs font-medium'>
+                <span className='truncate text-xs font-bold'>
                   {signal.label}
                 </span>
               </span>
-              <span className='text-muted-foreground shrink-0 text-xs'>
+              <span className='text-foreground font-bold shrink-0 text-xs'>
                 {signal.value}
               </span>
             </div>
@@ -366,17 +366,17 @@ function QuickActionItem(props: { action: QuickAction }) {
   return (
     <Button
       variant='outline'
-      className='h-auto justify-start rounded-xl px-3 py-3 text-left'
+      className='bg-white hover:bg-primary/5 hover:text-primary h-auto justify-start rounded-xl px-3 py-3 text-left'
       render={<Link to={props.action.to} />}
     >
-      <span className='bg-muted flex size-9 shrink-0 items-center justify-center rounded-lg'>
+      <span className='bg-white border-primary/20 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg border shadow-xs'>
         <Icon className='size-4' aria-hidden='true' />
       </span>
       <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
-        <span className='truncate text-sm font-medium'>
+        <span className='truncate text-sm font-bold'>
           {props.action.title}
         </span>
-        <span className='text-muted-foreground line-clamp-2 text-xs leading-relaxed'>
+        <span className='text-foreground line-clamp-2 text-xs leading-relaxed font-medium'>
           {props.action.description}
         </span>
       </span>
@@ -572,20 +572,18 @@ export function OverviewDashboard() {
               <div className='relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_21rem]'>
                 <div className='flex min-w-0 flex-col gap-5'>
                   <div className='flex flex-wrap items-start justify-between gap-3'>
-                    <div className='flex max-w-2xl flex-col gap-1'>
-                      <div className='text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wider uppercase'>
-                        <ListChecks className='size-3.5' aria-hidden='true' />
+                      <div className='bg-primary text-primary-foreground flex items-center gap-2 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase'>
+                        <ListChecks className='size-3' aria-hidden='true' />
                         {t('Get started')}
                       </div>
                       <h3 className='text-xl font-semibold tracking-tight sm:text-2xl'>
                         {t('Build on your API gateway in minutes')}
                       </h3>
-                      <p className='text-muted-foreground max-w-xl text-sm leading-relaxed'>
+                      <p className='text-foreground max-w-xl text-sm leading-relaxed font-medium'>
                         {t(
                           'A focused home for keys, balance, routing, and service health.'
                         )}
                       </p>
-                    </div>
                     <div className='flex flex-wrap items-center gap-2'>
                       <Button
                         variant='outline'
@@ -602,7 +600,7 @@ export function OverviewDashboard() {
                     </div>
                   </div>
 
-                  <ol className='bg-background/45 rounded-2xl border p-2 backdrop-blur'>
+                  <ol className='bg-white/80 rounded-2xl border p-2 backdrop-blur-sm shadow-sm'>
                     {startSteps.map((step, index) => (
                       <StartStepItem
                         key={step.title}
@@ -625,7 +623,7 @@ export function OverviewDashboard() {
           <CardStaggerItem className='bg-card h-full rounded-2xl border p-4 shadow-xs sm:p-5'>
             <div className='flex h-full flex-col gap-4'>
               <div className='flex flex-col gap-1'>
-                <div className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                <div className='bg-primary text-primary-foreground w-fit rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase'>
                   {t('Recommended actions')}
                 </div>
                 <h3 className='text-lg font-semibold tracking-tight'>
@@ -657,14 +655,14 @@ export function OverviewDashboard() {
                           ? t('Setup guide complete')
                           : t('Setup guide')}
                       </h3>
-                      <span className='text-muted-foreground bg-background/60 rounded-full border px-2 py-0.5 text-xs'>
+                      <span className='text-foreground font-medium bg-background/60 rounded-full border px-2 py-0.5 text-xs'>
                         {t('Setup progress: {{completed}}/{{total}}', {
                           completed: completedStepCount,
                           total: startSteps.length,
                         })}
                       </span>
                     </div>
-                    <p className='text-muted-foreground line-clamp-1 text-xs'>
+                    <p className='text-foreground font-medium line-clamp-1 text-xs'>
                       {setupComplete
                         ? t(
                             'Your setup guide is collapsed so usage stays in focus.'

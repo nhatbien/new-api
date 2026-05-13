@@ -40,7 +40,6 @@ export function PublicHeader(props: PublicHeaderProps) {
     showThemeSwitch = true,
     showLanguageSwitcher = true,
     logo: customLogo,
-    siteName: customSiteName,
     homeUrl = '/',
     showAuthButtons = true,
     showNotifications = true,
@@ -51,7 +50,6 @@ export function PublicHeader(props: PublicHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { auth } = useAuthStore()
   const {
-    systemName,
     logo: systemLogo,
     loading,
     logoLoaded,
@@ -63,7 +61,6 @@ export function PublicHeader(props: PublicHeaderProps) {
 
   const user = auth.user
   const isAuthenticated = !!user
-  const displaySiteName = customSiteName || systemName
   const links = dynamicLinks.length > 0 ? dynamicLinks : navLinks
 
   useEffect(() => {
@@ -98,13 +95,10 @@ export function PublicHeader(props: PublicHeaderProps) {
             )}
           >
             {/* Logo */}
-            <Link
-              to={homeUrl}
-              className='group flex shrink-0 items-center gap-2.5'
-            >
-              <div className='flex size-7 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105'>
+            <Link to={homeUrl} className='group flex shrink-0 items-center'>
+              <div className='flex h-8 w-32 shrink-0 items-center justify-start transition-all duration-300 group-hover:scale-105 sm:w-36'>
                 {loading ? (
-                  <Skeleton className='size-full rounded-lg' />
+                  <Skeleton className='h-8 w-full rounded-lg' />
                 ) : customLogo ? (
                   customLogo
                 ) : (
@@ -112,13 +106,10 @@ export function PublicHeader(props: PublicHeaderProps) {
                     src={systemLogo}
                     loading={loading}
                     logoLoaded={logoLoaded}
-                    className='size-full rounded-lg object-contain'
+                    className='h-full w-full rounded-none object-contain object-left'
                   />
                 )}
               </div>
-              <span className='text-sm font-semibold tracking-tight'>
-                {loading ? <Skeleton className='h-4 w-16' /> : displaySiteName}
-              </span>
             </Link>
 
             {/* Desktop nav */}

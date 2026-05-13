@@ -1,3 +1,15 @@
 {
-  "Each tier supports up to 2 conditions. The last tier without conditions is the fallback.": "Each tier supports up to 2 conditions. The last tier without conditions is the fallback."
+  "Add your API keys, set up channels and configure granular access permissions.": "Add your API keys, set up channels and configure granular access permissions.",
+  "Advanced quota management to prevent unexpected costs.": "Advanced quota management to prevent unexpected costs.",
+  "Built with Go for maximum throughput and efficiency.": "Built with Go for maximum throughput and efficiency.",
+  "Each tier supports up to 2 conditions. The last tier without conditions is the fallback.": "Each tier supports up to 2 conditions. The last tier without conditions is the fallback.",
+  "Enterprise-grade security with granular permission controls and encryption.": "Enterprise-grade security with granular permission controls and encryption.",
+  "is the modern open-source gateway for enterprise-grade AI deployments. Connect, manage, and scale your AI infrastructure with confidence.": "is the modern open-source gateway for enterprise-grade AI deployments. Connect, manage, and scale your AI infrastructure with confidence.",
+  "Isolate workloads with flexible team and user management.": "Isolate workloads with flexible team and user management.",
+  "Join hundreds of developers building the next generation of AI applications with our unified gateway.": "Join hundreds of developers building the next generation of AI applications with our unified gateway.",
+  "Route requests through OpenAI, Claude, Gemini, and other compatible endpoints.": "Route requests through OpenAI, Claude, Gemini, and other compatible endpoints.",
+  "Smart load balancing and automatic failover for 99.99% uptime.": "Smart load balancing and automatic failover for 99.99% uptime.",
+  "Track usage, costs and performance with beautiful real-time analytics.": "Track usage, costs and performance with beautiful real-time analytics.",
+  "Transparent, community-driven, and easy to self-host.": "Transparent, community-driven, and easy to self-host.",
+  "Unified API routes that work seamlessly with your existing tools and SDKs.": "Unified API routes that work seamlessly with your existing tools and SDKs."
 }

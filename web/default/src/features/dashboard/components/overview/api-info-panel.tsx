@@ -30,7 +30,7 @@ export function ApiInfoPanel() {
     <PanelWrapper
       title={
         <span className='flex items-center gap-2'>
-          <Route className='text-muted-foreground/60 size-4' />
+          <Route className='text-foreground/80 size-4' />
           {t('API Info')}
         </span>
       }

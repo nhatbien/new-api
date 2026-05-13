@@ -53,7 +53,7 @@ export function AnnouncementDetailModal({
                 <h4 className='mb-2 font-medium'>
                   {t('Additional Information')}
                 </h4>
-                <Markdown className='text-muted-foreground'>
+                <Markdown className='text-foreground/80'>
                   {announcement.extra}
                 </Markdown>
               </div>

@@ -28,7 +28,6 @@ import {
   showInfo,
   showSuccess,
   updateAPI,
-  getSystemName,
   getOAuthProviderIcon,
   setUserData,
   onGitHubOAuthClicked,
@@ -114,7 +113,6 @@ const LoginForm = () => {
   const [customOAuthLoading, setCustomOAuthLoading] = useState({});
 
   const logo = getLogo();
-  const systemName = getSystemName();
 
   let affCode = new URLSearchParams(window.location.search).get('aff');
   if (affCode) {
@@ -504,11 +502,12 @@ const LoginForm = () => {
     return (
       <div className='flex flex-col items-center'>
         <div className='w-full max-w-md'>
-          <div className='flex items-center justify-center mb-6 gap-2'>
-            <img src={logo} alt='Logo' className='h-10 rounded-full' />
-            <Title heading={3} className='!text-gray-800'>
-              {systemName}
-            </Title>
+          <div className='flex items-center justify-center mb-6'>
+            <img
+              src={logo}
+              alt='Logo'
+              className='h-12 w-48 object-contain'
+            />
           </div>
 
           <Card className='border-0 !rounded-2xl overflow-hidden'>
@@ -720,9 +719,12 @@ const LoginForm = () => {
     return (
       <div className='flex flex-col items-center'>
         <div className='w-full max-w-md'>
-          <div className='flex items-center justify-center mb-6 gap-2'>
-            <img src={logo} alt='Logo' className='h-10 rounded-full' />
-            <Title heading={3}>{systemName}</Title>
+          <div className='flex items-center justify-center mb-6'>
+            <img
+              src={logo}
+              alt='Logo'
+              className='h-12 w-48 object-contain'
+            />
           </div>
 
           <Card className='border-0 !rounded-2xl overflow-hidden'>

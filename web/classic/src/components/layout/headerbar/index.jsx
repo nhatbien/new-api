@@ -36,7 +36,6 @@ const HeaderBar = ({ onMobileMenuToggle, drawerOpen }) => {
     logoLoaded,
     currentLang,
     isLoading,
-    systemName,
     logo,
     isNewYear,
     isSelfUseMode,
@@ -92,7 +91,6 @@ const HeaderBar = ({ onMobileMenuToggle, drawerOpen }) => {
               logo={logo}
               logoLoaded={logoLoaded}
               isLoading={isLoading}
-              systemName={systemName}
               isSelfUseMode={isSelfUseMode}
               isDemoSiteMode={isDemoSiteMode}
               t={t}

@@ -163,7 +163,7 @@ export function SummaryCards() {
               <h3 className='text-base font-semibold'>
                 {t('Usage at a glance')}
               </h3>
-              <p className='text-muted-foreground text-sm'>
+              <p className='text-foreground text-sm'>
                 {t('Monitor balance, usage, and request volume')}
               </p>
             </div>
@@ -172,7 +172,7 @@ export function SummaryCards() {
             {items.map((it) => (
               <StaggerItem
                 key={it.title}
-                className='bg-background/60 rounded-xl border p-3'
+                className='bg-background rounded-xl border p-3'
               >
                 <StatCard
                   title={it.title}
@@ -188,9 +188,9 @@ export function SummaryCards() {
           </StaggerContainer>
         </div>
 
-        <div className='bg-warning/10 flex flex-col justify-between gap-5 border-t p-4 sm:p-5 xl:border-t-0 xl:border-l'>
+        <div className='bg-background flex flex-col justify-between gap-5 border-t p-4 sm:p-5 xl:border-t-0 xl:border-l'>
           <div className='flex flex-col gap-2'>
-            <div className='text-muted-foreground text-sm'>
+            <div className='text-foreground text-sm'>
               {t('Credit remaining')}
             </div>
             <div className='flex items-center gap-2'>
@@ -198,11 +198,11 @@ export function SummaryCards() {
                 {summaryValues.remainDisplay}
               </span>
               <CreditCard
-                className='text-muted-foreground size-4'
+                className='text-foreground/80 size-4'
                 aria-hidden='true'
               />
             </div>
-            <p className='text-muted-foreground text-sm leading-relaxed'>
+            <p className='text-foreground text-sm leading-relaxed'>
               {currencyEnabled
                 ? `${t('Displayed in')} ${currencyLabel}`
                 : t('Balance is shown in quota units')}

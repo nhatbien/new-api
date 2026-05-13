@@ -17,7 +17,7 @@ const STATUS_COLOR_MAP: Record<number, string> = {
   2: 'bg-warning',
   3: 'bg-info',
 }
-const DEFAULT_STATUS_COLOR = 'bg-muted-foreground/40'
+const DEFAULT_STATUS_COLOR = 'bg-foreground/40'
 
 const StatusDot = memo(function StatusDot(props: { status: number }) {
   const color = STATUS_COLOR_MAP[props.status] ?? DEFAULT_STATUS_COLOR
@@ -77,7 +77,7 @@ export function UptimePanel() {
     <PanelWrapper
       title={
         <span className='flex items-center gap-2'>
-          <Activity className='text-muted-foreground/60 size-4' />
+          <Activity className='text-foreground/80 size-4' />
           {t('Uptime')}
         </span>
       }
@@ -106,12 +106,12 @@ export function UptimePanel() {
         <div>
           {groups.map((group, groupIdx) => (
             <div key={group.categoryName}>
-              <div className='bg-muted/30 border-border/60 border-b px-3 py-2 sm:px-5'>
+              <div className='bg-background/80 border-border/60 border-b px-3 py-2 sm:px-5'>
                 <div className='flex items-center gap-2'>
-                  <h4 className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                  <h4 className='text-foreground/90 text-xs font-semibold tracking-wider uppercase'>
                     {group.categoryName}
                   </h4>
-                  <span className='text-muted-foreground/40 font-mono text-xs tabular-nums'>
+                  <span className='text-foreground/50 font-mono text-xs tabular-nums'>
                     {group.monitors?.length || 0}
                   </span>
                 </div>
@@ -122,7 +122,7 @@ export function UptimePanel() {
                   <div
                     key={monitor.name}
                     className={cn(
-                      'hover:bg-muted/40 flex items-center justify-between gap-2 px-3 py-2 transition-colors sm:px-5 sm:py-2.5',
+                      'hover:bg-background/60 flex items-center justify-between gap-2 px-3 py-2 transition-colors sm:px-5 sm:py-2.5',
                       monitorIdx < (group.monitors?.length || 0) - 1 &&
                         'border-border/40 border-b',
                       groupIdx < groups.length - 1 &&
@@ -134,7 +134,7 @@ export function UptimePanel() {
                       <StatusDot status={monitor.status} />
                       <span className='truncate text-sm'>{monitor.name}</span>
                       {monitor.group && (
-                        <span className='text-muted-foreground/40 shrink-0 text-xs'>
+                        <span className='text-foreground/50 shrink-0 text-xs'>
                           ({monitor.group})
                         </span>
                       )}

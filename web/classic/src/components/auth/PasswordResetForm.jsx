@@ -24,7 +24,6 @@ import {
   showError,
   showInfo,
   showSuccess,
-  getSystemName,
 } from '../../helpers';
 import Turnstile from 'react-turnstile';
 import { Button, Card, Form, Typography } from '@douyinfe/semi-ui';
@@ -49,7 +48,6 @@ const PasswordResetForm = () => {
   const [countdown, setCountdown] = useState(30);
 
   const logo = getLogo();
-  const systemName = getSystemName();
 
   useEffect(() => {
     let status = localStorage.getItem('status');
@@ -117,11 +115,12 @@ const PasswordResetForm = () => {
       <div className='w-full max-w-sm mt-[60px]'>
         <div className='flex flex-col items-center'>
           <div className='w-full max-w-md'>
-            <div className='flex items-center justify-center mb-6 gap-2'>
-              <img src={logo} alt='Logo' className='h-10 rounded-full' />
-              <Title heading={3} className='!text-gray-800'>
-                {systemName}
-              </Title>
+            <div className='flex items-center justify-center mb-6'>
+              <img
+                src={logo}
+                alt='Logo'
+                className='h-12 w-48 object-contain'
+              />
             </div>
 
             <Card className='border-0 !rounded-2xl overflow-hidden'>

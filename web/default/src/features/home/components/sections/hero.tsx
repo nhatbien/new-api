@@ -15,69 +15,82 @@ export function Hero(props: HeroProps) {
   const { systemName } = useSystemConfig()
 
   return (
-    <section className='relative z-10 flex flex-col items-center overflow-hidden px-6 pt-28 pb-16 md:pt-36 md:pb-24'>
-      {/* Radial gradient background */}
+    <section className='relative z-10 flex flex-col items-center overflow-hidden px-6 pt-32 pb-16 md:pt-44 md:pb-24'>
+      {/* Background glow effects */}
       <div
         aria-hidden
-        className='pointer-events-none absolute inset-0 -z-10 opacity-25 dark:opacity-[0.12]'
-        style={{
-          background: [
-            'radial-gradient(ellipse 60% 50% at 20% 20%, oklch(0.72 0.18 250 / 80%) 0%, transparent 70%)',
-            'radial-gradient(ellipse 50% 40% at 80% 15%, oklch(0.65 0.15 200 / 60%) 0%, transparent 70%)',
-            'radial-gradient(ellipse 40% 35% at 40% 80%, oklch(0.70 0.12 280 / 40%) 0%, transparent 70%)',
-          ].join(', '),
-        }}
-      />
+        className='pointer-events-none absolute inset-0 -z-10'
+      >
+        <div
+          className='absolute top-0 left-1/2 h-[500px] w-full -translate-x-1/2 opacity-20 blur-[120px] dark:opacity-[0.15]'
+          style={{
+            background: `radial-gradient(circle at center, var(--primary) 0%, transparent 70%)`,
+          }}
+        />
+        <div
+          className='absolute top-[10%] right-[10%] h-[400px] w-[400px] opacity-10 blur-[100px] dark:opacity-[0.08]'
+          style={{
+            background: `radial-gradient(circle at center, var(--primary) 0%, transparent 70%)`,
+          }}
+        />
+      </div>
+
       {/* Grid pattern */}
       <div
         aria-hidden
-        className='absolute inset-0 -z-10 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_30%,black_20%,transparent_100%)] bg-[size:4rem_4rem] opacity-[0.08]'
+        className='absolute inset-0 -z-10 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_35%,black_30%,transparent_100%)] bg-[size:4rem_4rem] opacity-[0.05]'
       />
 
-      <div className='flex max-w-3xl flex-col items-center text-center'>
+      <div className='flex max-w-4xl flex-col items-center text-center'>
+        <div className='landing-animate-fade-up border-primary/20 bg-primary/5 mb-6 inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium tracking-wider text-primary uppercase opacity-0' style={{ animationDelay: '0ms' }}>
+          {t('Next-Generation AI Gateway')}
+        </div>
         <h1
-          className='landing-animate-fade-up text-[clamp(2rem,5.5vw,3.5rem)] leading-[1.15] font-bold tracking-tight'
-          style={{ animationDelay: '0ms' }}
+          className='landing-animate-fade-up text-[clamp(2.5rem,7vw,4.5rem)] leading-[1.05] font-extrabold tracking-tight'
+          style={{ animationDelay: '100ms' }}
         >
-          {t('Unified API Gateway for')}
+          {t('Unified API for')}
           <br />
-          <span className='bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent'>
+          <span className='from-foreground to-foreground/70 bg-gradient-to-b bg-clip-text text-transparent'>
             {t('All Your AI Models')}
           </span>
         </h1>
         <p
-          className='landing-animate-fade-up text-muted-foreground/80 mt-5 max-w-lg text-base leading-relaxed opacity-0 md:text-lg'
-          style={{ animationDelay: '80ms' }}
+          className='landing-animate-fade-up text-muted-foreground/80 mt-6 max-w-2xl text-base leading-relaxed opacity-0 md:text-xl'
+          style={{ animationDelay: '200ms' }}
         >
           {systemName}{' '}
           {t(
-            'is an open-source AI API gateway for self-hosted deployments. Connect multiple upstream services, manage models, keys, quotas, logs, and routing policies in one place.'
+            'is the modern open-source gateway for enterprise-grade AI deployments. Connect, manage, and scale your AI infrastructure with confidence.'
           )}
         </p>
         <div
-          className='landing-animate-fade-up mt-8 flex items-center gap-3 opacity-0'
-          style={{ animationDelay: '160ms' }}
+          className='landing-animate-fade-up mt-10 flex flex-col items-center gap-4 opacity-0 sm:flex-row'
+          style={{ animationDelay: '300ms' }}
         >
           {props.isAuthenticated ? (
             <Button
-              className='group rounded-lg'
+              size='lg'
+              className='group h-12 rounded-xl px-8 text-sm font-semibold'
               render={<Link to='/dashboard' />}
             >
               {t('Go to Dashboard')}
-              <ArrowRight className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
+              <ArrowRight className='ml-2 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
             </Button>
           ) : (
             <>
               <Button
-                className='group rounded-lg'
+                size='lg'
+                className='group h-12 rounded-xl px-8 text-sm font-semibold'
                 render={<Link to='/sign-up' />}
               >
-                {t('Get Started')}
-                <ArrowRight className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
+                {t('Get Started Free')}
+                <ArrowRight className='ml-2 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
               </Button>
               <Button
                 variant='outline'
-                className='border-border/50 hover:border-border hover:bg-muted/50 rounded-lg'
+                size='lg'
+                className='border-border/60 hover:border-border hover:bg-muted/50 h-12 rounded-xl px-8 text-sm font-semibold'
                 render={<Link to='/pricing' />}
               >
                 {t('View Pricing')}
@@ -88,10 +101,13 @@ export function Hero(props: HeroProps) {
       </div>
 
       <div
-        className='landing-animate-fade-up w-full opacity-0'
-        style={{ animationDelay: '300ms' }}
+        className='landing-animate-fade-up mt-16 w-full opacity-0 md:mt-24'
+        style={{ animationDelay: '450ms' }}
       >
-        <HeroTerminalDemo />
+        <div className='relative mx-auto max-w-5xl'>
+          <div className='bg-primary/20 absolute -inset-1 rounded-[2rem] opacity-20 blur-2xl dark:opacity-10' />
+          <HeroTerminalDemo />
+        </div>
       </div>
     </section>
   )

@@ -700,13 +700,13 @@ export function processChartData(
 }
 
 const USER_COLOR_FALLBACKS = [
-  '#5B8FF9',
-  '#5AD8A6',
-  '#F6BD16',
-  '#E8684A',
-  '#6DC8EC',
+  '#FF7A00',
+  '#FFA726',
+  '#FFB74D',
+  '#14B8A6',
+  '#F43F5E',
   '#9270CA',
-  '#FF9D4D',
+  '#5B8FF9',
   '#269A99',
   '#FF99C3',
   '#5D7092',

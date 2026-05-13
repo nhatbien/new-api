@@ -80,25 +80,25 @@ export function Stats(_props: StatsProps) {
   const { t } = useTranslation()
 
   const stats: StatItem[] = [
-    { end: 50, suffix: '+', label: t('upstream services integrated') },
-    { end: 100, suffix: '+', label: t('model billing support') },
-    { end: 50, suffix: '+', label: t('compatible API routes') },
-    { end: 10, suffix: '+', label: t('scheduling controls') },
+    { end: 50, suffix: '+', label: t('Upstream services') },
+    { end: 100, suffix: '+', label: t('Models supported') },
+    { end: 50, suffix: '+', label: t('API compatible') },
+    { end: 10, suffix: '+', label: t('Control policies') },
   ]
 
   return (
-    <div className='border-border/40 bg-muted/10 relative z-10 border-y'>
-      <div className='mx-auto max-w-6xl px-6 py-10 md:py-12'>
-        <div className='grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12'>
-          {stats.map((s) => (
+    <div className='relative z-10'>
+      <div className='mx-auto max-w-6xl px-6 py-12 md:py-20'>
+        <div className='bg-muted/30 border-border/40 grid grid-cols-2 divide-y divide-x overflow-hidden rounded-3xl border md:grid-cols-4 md:divide-y-0'>
+          {stats.map((s, i) => (
             <div
               key={s.label}
-              className='flex flex-col items-center text-center'
+              className='hover:bg-muted/50 flex flex-col items-center p-8 text-center transition-colors duration-300 md:p-12'
             >
-              <span className='text-2xl font-bold tracking-tight md:text-3xl'>
+              <span className='from-foreground to-foreground/70 bg-gradient-to-b bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-4xl'>
                 <Counter end={s.end} suffix={s.suffix} decimals={s.decimals} />
               </span>
-              <span className='text-muted-foreground mt-1.5 text-xs'>
+              <span className='text-muted-foreground mt-2 text-[13px] font-medium tracking-wide uppercase'>
                 {s.label}
               </span>
             </div>

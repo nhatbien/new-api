@@ -1,15 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Gift, ExternalLink, Loader2, Receipt, WalletCards } from 'lucide-react'
+import { Gift, ExternalLink, Loader2, Receipt, WalletCards, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatPaymentLocalCurrencyAmount } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { TitledCard } from '@/components/ui/titled-card'
 import {
   Tooltip,
   TooltipContent,
@@ -84,7 +83,6 @@ export function RechargeFormCard({
   loading,
   priceRatio = 1,
   usdExchangeRate = 1,
-  onOpenBilling,
   creemProducts,
   enableCreemTopup,
   onCreemProductSelect,
@@ -135,106 +133,53 @@ export function RechargeFormCard({
 
   if (loading) {
     return (
-      <Card className='gap-0 overflow-hidden py-0'>
-        <CardHeader className='border-b p-3 !pb-3 sm:p-5 sm:!pb-5'>
-          <Skeleton className='h-6 w-32' />
-          <Skeleton className='mt-2 h-4 w-48' />
-        </CardHeader>
-        <CardContent className='space-y-4 p-3 sm:space-y-6 sm:p-5'>
-          <div className='space-y-4 sm:space-y-6'>
-            {/* Preset Amounts Skeleton */}
-            <div className='space-y-3'>
-              <Skeleton className='h-3 w-16' />
-              <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className='h-[72px] rounded-lg' />
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Amount Input Skeleton */}
-            <div className='space-y-3'>
-              <Skeleton className='h-3 w-28' />
-              <Skeleton className='h-[42px] w-full' />
-            </div>
-
-            {/* Payment Methods Skeleton */}
-            <div className='space-y-3'>
-              <Skeleton className='h-3 w-32' />
-              <div className='flex flex-wrap gap-3'>
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className='h-10 w-24 rounded-lg' />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Redemption Code Section Skeleton */}
-          <div className='space-y-3 border-t pt-8'>
-            <Skeleton className='h-3 w-24' />
-            <div className='flex gap-2'>
-              <Skeleton className='h-10 flex-1' />
-              <Skeleton className='h-10 w-20' />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className='space-y-6'>
+        <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className='h-24 rounded-2xl' />
+          ))}
+        </div>
+        <Skeleton className='h-40 rounded-2xl' />
+      </div>
     )
   }
 
   return (
-    <TitledCard
-      title={t('Add Funds')}
-      description={t('Choose an amount and payment method')}
-      icon={<WalletCards className='h-4 w-4' />}
-      hideHeaderBorder
-      action={
-        onOpenBilling ? (
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={onOpenBilling}
-            className='w-full gap-2 sm:w-auto'
-          >
-            <Receipt className='h-4 w-4' />
-            {t('Order History')}
-          </Button>
-        ) : null
-      }
-      contentClassName='space-y-6 sm:space-y-8 pb-8'
-    >
+    <div className='flex flex-col gap-8 pb-8'>
       {/* Online Topup Section */}
       {hasAnyTopup ? (
-        <div className='space-y-6 sm:space-y-8'>
+        <div className='flex flex-col gap-8'>
           {hasConfigurableTopup && (
             <>
               {extendedPresets.length > 0 && (
-                <div className='space-y-3 sm:space-y-4'>
-                  <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                    {t('Amount')}
-                  </Label>
-                  <div className='grid grid-cols-2 gap-1.5 sm:gap-3 md:grid-cols-4'>
+                <div className='flex flex-col gap-4'>
+                  <div className='flex items-center justify-between'>
+                    <Label className='text-muted-foreground text-xs font-bold tracking-wider uppercase'>
+                      1. {t('Select Amount')}
+                    </Label>
+                  </div>
+                  <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
                     {extendedPresets.map((preset, index) => {
                       if (preset.value === -1) {
                         return (
-                          <Button
+                          <button
                             key='custom-preset'
-                            variant='outline'
+                            type='button'
                             className={cn(
-                              'hover:border-primary/50 relative flex min-h-[80px] flex-col items-center justify-center rounded-xl px-3 py-2.5 text-center transition-all sm:min-h-[90px]',
+                              'group relative flex min-h-[90px] flex-col items-center justify-center rounded-2xl border-2 px-4 py-3 transition-all duration-200',
                               selectedPreset === -1
-                                ? 'border-primary bg-primary/5 ring-primary/20 ring-1'
-                                : 'border-muted bg-background'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-muted bg-background hover:border-primary/30 hover:bg-muted/30'
                             )}
                             onClick={() => onSelectPreset(preset)}
                           >
-                            <div className='text-base font-bold sm:text-lg'>
+                            <div className='text-lg font-bold sm:text-xl'>
                               {t('Custom')}
                             </div>
                             <div className='text-muted-foreground mt-1 text-[10px] font-medium uppercase tracking-tight'>
                               {t('Flexible')}
                             </div>
-                          </Button>
+                          </button>
                         )
                       }
 
@@ -254,29 +199,29 @@ export function RechargeFormCard({
                       )
 
                       return (
-                        <Button
+                        <button
                           key={index}
-                          variant='outline'
+                          type='button'
                           className={cn(
-                            'hover:border-primary/50 relative flex min-h-[80px] flex-col items-start rounded-xl px-3 py-3 text-left transition-all whitespace-normal sm:min-h-[90px] sm:px-4',
+                            'group relative flex min-h-[90px] flex-col items-start justify-between rounded-2xl border-2 px-4 py-4 text-left transition-all duration-200',
                             selectedPreset === preset.value
-                              ? 'border-primary bg-primary/5 ring-primary/20 ring-1'
-                              : 'border-muted bg-background'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-muted bg-background hover:border-primary/30 hover:bg-muted/30'
                           )}
                           onClick={() => onSelectPreset(preset)}
                         >
                           {hasDiscount && (
-                            <div className='bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 absolute top-2 right-2 rounded-md px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase'>
+                            <div className='bg-green-500 absolute -top-2.5 -right-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ring-2 ring-white'>
                               {getDiscountLabel(discount)}
                             </div>
                           )}
 
-                          <div className='text-xl font-bold tracking-tight sm:text-2xl'>
+                          <div className='text-2xl font-black tracking-tight'>
                             {formatCurrency(preset.value, '$')}
                           </div>
 
-                          <div className='mt-auto flex w-full flex-wrap items-baseline gap-1.5'>
-                            <span className='text-foreground text-xs font-semibold whitespace-nowrap'>
+                          <div className='mt-2 flex w-full flex-col'>
+                            <span className='text-foreground text-xs font-bold'>
                               {formatPaymentLocalCurrencyAmount(actualPrice, {
                                 digitsLarge: 2,
                                 digitsSmall: 2,
@@ -284,7 +229,7 @@ export function RechargeFormCard({
                               })}
                             </span>
                             {hasDiscount && (
-                              <span className='text-muted-foreground/60 text-[10px] line-through decoration-1 underline-offset-2 whitespace-nowrap'>
+                              <span className='text-muted-foreground/60 text-[10px] line-through decoration-1 underline-offset-2'>
                                 {formatPaymentLocalCurrencyAmount(
                                   originalPrice,
                                   {
@@ -296,7 +241,7 @@ export function RechargeFormCard({
                               </span>
                             )}
                           </div>
-                        </Button>
+                        </button>
                       )
                     })}
                   </div>
@@ -304,32 +249,40 @@ export function RechargeFormCard({
               )}
 
               {showCustomInput && (
-                <div className='space-y-3 sm:space-y-4'>
+                <div className='bg-muted/30 flex flex-col gap-4 rounded-3xl border-2 border-dashed p-6 transition-all sm:p-8'>
                   <Label
                     htmlFor='topup-amount'
-                    className='text-muted-foreground text-xs font-medium tracking-wider uppercase'
+                    className='text-muted-foreground text-xs font-bold tracking-wider uppercase'
                   >
                     {t('Custom Amount')}
                   </Label>
-                  <div className='grid grid-cols-[minmax(0,1fr)_minmax(110px,0.55fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center'>
-                    <Input
-                      id='topup-amount'
-                      type='number'
-                      value={localAmount}
-                      onChange={(e) => handleAmountChange(e.target.value)}
-                      min={minTopup}
-                      step={1}
-                      placeholder={`Minimum ${minTopup}`}
-                      className='h-9 text-base sm:h-10 sm:text-lg'
-                    />
-                    <div className='bg-muted/40 flex min-h-9 items-center justify-between gap-2 rounded-md px-3 lg:min-w-52'>
-                      <span className='text-muted-foreground truncate text-xs'>
-                        {t('Amount to pay:')}
+                  <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
+                    <div className='relative flex-1'>
+                      <div className='text-muted-foreground absolute top-1/2 left-4 -translate-y-1/2 font-bold'>
+                        $
+                      </div>
+                      <Input
+                        id='topup-amount'
+                        type='number'
+                        value={localAmount}
+                        onChange={(e) => handleAmountChange(e.target.value)}
+                        min={minTopup}
+                        step={1}
+                        placeholder={`Min ${minTopup}`}
+                        className='h-12 border-2 border-muted-foreground/20 bg-background pl-8 text-xl font-bold focus-visible:border-primary focus-visible:ring-0'
+                      />
+                    </div>
+                    <div className='hidden text-muted-foreground sm:block'>
+                      <ChevronRight className='size-6' />
+                    </div>
+                    <div className='bg-background flex flex-1 items-center justify-between rounded-xl border-2 border-muted-foreground/10 px-6 py-3'>
+                      <span className='text-muted-foreground text-sm font-medium'>
+                        {t('Total to pay')}
                       </span>
                       {calculating ? (
-                        <Skeleton className='h-5 w-16' />
+                        <Skeleton className='h-7 w-20' />
                       ) : (
-                        <span className='text-sm font-semibold'>
+                        <span className='text-primary text-xl font-black'>
                           {formatPaymentLocalCurrencyAmount(
                             paymentAmount *
                               getAmountDiscount(
@@ -349,12 +302,12 @@ export function RechargeFormCard({
                 </div>
               )}
 
-              <div className='space-y-3 sm:space-y-4'>
-                <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                  {t('Payment Method')}
+              <div className='flex flex-col gap-4'>
+                <Label className='text-muted-foreground text-xs font-bold tracking-wider uppercase'>
+                  2. {t('Choose Payment Method')}
                 </Label>
-                {hasStandardPaymentMethods ? (
-                  <div className='grid grid-cols-2 gap-1.5 sm:gap-3 lg:grid-cols-3'>
+                {hasStandardPaymentMethods || hasWaffoPaymentMethods ? (
+                  <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
                     {topupInfo?.pay_methods?.map((method) => {
                       const minTopup = method.min_topup || 0
                       const disabled = minTopup > topupAmount
@@ -365,19 +318,27 @@ export function RechargeFormCard({
                           variant='outline'
                           onClick={() => onPaymentMethodSelect(method)}
                           disabled={disabled || !!paymentLoading}
-                          className='h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
-                        >
-                          {paymentLoading === method.type ? (
-                            <Loader2 className='h-4 w-4 animate-spin' />
-                          ) : (
-                            getPaymentIcon(
-                              method.type,
-                              'h-4 w-4',
-                              method.icon,
-                              method.name
-                            )
+                          className={cn(
+                            'group hover:border-primary hover:bg-primary/5 h-14 justify-between gap-3 rounded-2xl border-2 px-5 transition-all',
+                            paymentLoading === method.type && 'border-primary'
                           )}
-                          <span className='truncate'>{method.name}</span>
+                        >
+                          <div className='flex items-center gap-3'>
+                            <div className='bg-muted group-hover:bg-primary/10 flex size-8 items-center justify-center rounded-lg transition-colors'>
+                              {paymentLoading === method.type ? (
+                                <Loader2 className='size-4 animate-spin' />
+                              ) : (
+                                getPaymentIcon(
+                                  method.type,
+                                  'size-4',
+                                  method.icon,
+                                  method.name
+                                )
+                              )}
+                            </div>
+                            <span className='font-bold'>{method.name}</span>
+                          </div>
+                          <ChevronRight className='text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5' />
                         </Button>
                       )
 
@@ -396,27 +357,9 @@ export function RechargeFormCard({
                         button
                       )
                     })}
-                  </div>
-                ) : hasWaffoPaymentMethods ? null : (
-                  <Alert>
-                    <AlertDescription>
-                      {t(
-                        'No payment methods available. Please contact administrator.'
-                      )}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
 
-              {enableWaffoTopup &&
-                hasWaffoPaymentMethods &&
-                onWaffoMethodSelect && (
-                  <div className='space-y-3 sm:space-y-4'>
-                    <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                      {t('Waffo Payment')}
-                    </Label>
-                    <div className='grid grid-cols-2 gap-1.5 sm:gap-3 lg:grid-cols-3'>
-                      {waffoPayMethods?.map((method, index) => {
+                    {enableWaffoTopup &&
+                      waffoPayMethods?.map((method, index) => {
                         const loadingKey = `waffo-${index}`
                         const waffoMin = waffoMinTopup || 0
                         const belowMin = waffoMin > topupAmount
@@ -425,22 +368,30 @@ export function RechargeFormCard({
                           <Button
                             key={`${method.name}-${index}`}
                             variant='outline'
-                            onClick={() => onWaffoMethodSelect(method, index)}
+                            onClick={() => onWaffoMethodSelect?.(method, index)}
                             disabled={belowMin || !!paymentLoading}
-                            className='h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
-                          >
-                            {paymentLoading === loadingKey ? (
-                              <Loader2 className='h-4 w-4 animate-spin' />
-                            ) : method.icon ? (
-                              <img
-                                src={method.icon}
-                                alt={method.name}
-                                className='h-4 w-4 object-contain'
-                              />
-                            ) : (
-                              getPaymentIcon('waffo')
+                            className={cn(
+                              'group hover:border-primary hover:bg-primary/5 h-14 justify-between gap-3 rounded-2xl border-2 px-5 transition-all',
+                              paymentLoading === loadingKey && 'border-primary'
                             )}
-                            <span className='truncate'>{method.name}</span>
+                          >
+                            <div className='flex items-center gap-3'>
+                              <div className='bg-muted group-hover:bg-primary/10 flex size-8 items-center justify-center rounded-lg transition-colors'>
+                                {paymentLoading === loadingKey ? (
+                                  <Loader2 className='size-4 animate-spin' />
+                                ) : method.icon ? (
+                                  <img
+                                    src={method.icon}
+                                    alt={method.name}
+                                    className='size-4 object-contain'
+                                  />
+                                ) : (
+                                  getPaymentIcon('waffo')
+                                )}
+                              </div>
+                              <span className='font-bold'>{method.name}</span>
+                            </div>
+                            <ChevronRight className='text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5' />
                           </Button>
                         )
 
@@ -459,14 +410,22 @@ export function RechargeFormCard({
                           button
                         )
                       })}
-                    </div>
                   </div>
+                ) : (
+                  <Alert className='rounded-2xl'>
+                    <AlertDescription>
+                      {t(
+                        'No payment methods available. Please contact administrator.'
+                      )}
+                    </AlertDescription>
+                  </Alert>
                 )}
+              </div>
             </>
           )}
         </div>
       ) : (
-        <Alert>
+        <Alert className='rounded-2xl'>
           <AlertDescription>
             {t(
               'Online topup is not enabled. Please use redemption code or contact administrator.'
@@ -480,9 +439,9 @@ export function RechargeFormCard({
         Array.isArray(creemProducts) &&
         creemProducts.length > 0 &&
         onCreemProductSelect && (
-          <div className='space-y-3 sm:space-y-4'>
-            <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-              {t('Creem Payment')}
+          <div className='flex flex-col gap-4'>
+            <Label className='text-muted-foreground text-xs font-bold tracking-wider uppercase'>
+              {t('Creem Products')}
             </Label>
             <CreemProductsSection
               products={creemProducts}
@@ -490,51 +449,6 @@ export function RechargeFormCard({
             />
           </div>
         )}
-
-      {/* Redemption Code Section */}
-      <div className='space-y-3 sm:space-y-4'>
-        <div className='flex items-center gap-2'>
-          <Gift className='text-muted-foreground h-4 w-4' />
-          <Label
-            htmlFor='redemption-code'
-            className='text-muted-foreground text-xs font-medium tracking-wider uppercase'
-          >
-            {t('Have a Code?')}
-          </Label>
-        </div>
-        <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-2'>
-          <Input
-            id='redemption-code'
-            value={redemptionCode}
-            onChange={(e) => onRedemptionCodeChange(e.target.value)}
-            placeholder={t('Enter your redemption code')}
-            className='h-9 min-w-0'
-          />
-          <Button
-            onClick={onRedeem}
-            disabled={redeeming}
-            variant='outline'
-            className='h-9 px-4'
-          >
-            {redeeming && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            {t('Redeem')}
-          </Button>
-        </div>
-        {topupLink && (
-          <p className='text-muted-foreground text-xs'>
-            {t('Need a code?')}{' '}
-            <a
-              href={topupLink}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='inline-flex items-center gap-1 underline-offset-4 hover:underline'
-            >
-              {t('Purchase here')}
-              <ExternalLink className='h-3 w-3' />
-            </a>
-          </p>
-        )}
-      </div>
-    </TitledCard>
+    </div>
   )
 }

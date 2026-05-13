@@ -18,6 +18,18 @@
   --sidebar-width: 180px;
   --sidebar-width-collapsed: 60px;
   --sidebar-current-width: var(--sidebar-width);
+  --brand-primary: #ff7a00;
+  --brand-primary-highlight: #ffa726;
+  --brand-primary-accent: #ffb74d;
+  --semi-color-primary: var(--brand-primary);
+  --semi-color-primary-hover: var(--brand-primary-highlight);
+  --semi-color-primary-active: #e66e00;
+  --semi-color-primary-light-default: rgba(255, 122, 0, 0.08);
+  --semi-color-primary-light-hover: rgba(255, 122, 0, 0.15);
+  --semi-color-primary-light-active: rgba(255, 122, 0, 0.22);
+  --semi-blue-0: 255, 122, 0;
+  --semi-blue-4: 255, 167, 38;
+  --semi-blue-5: 255, 122, 0;
 }
 
 body.sidebar-collapsed {
@@ -156,12 +168,12 @@ code {
 }
 
 .sidebar-nav-item:hover {
-  background-color: rgba(var(--semi-blue-0), 0.08);
+  background-color: var(--semi-color-primary-light-default);
   color: var(--semi-color-primary);
 }
 
 .sidebar-nav-item-selected {
-  background-color: rgba(var(--semi-blue-0), 0.12);
+  background-color: var(--semi-color-primary-light-hover);
   color: var(--semi-color-primary);
   font-weight: 500;
 }

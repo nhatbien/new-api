@@ -261,7 +261,7 @@ export function ThroughputBarChart(props: {
       xField: 'throughput_tps',
       yField: 'group',
       bar: {
-        style: { fill: '#6366f1', cornerRadius: 2 },
+        style: { fill: 'var(--primary)', cornerRadius: 2 },
       },
       label: {
         visible: true,
