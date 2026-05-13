@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // SSR enabled for homepage; dashboard remains client-side only
+  // SSR for `/` (SEO); other routes rendered client-side via [...path] catch-all.
   output: 'standalone',
   trailingSlash: true,
   env: {

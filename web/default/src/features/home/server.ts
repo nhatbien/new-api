@@ -1,6 +1,9 @@
 import { headers } from 'next/headers'
 import type { HomePageContentResponse } from './types'
 
+const FETCH_TIMEOUT_MS = 1500
+const REVALIDATE_SECONDS = 60
+
 function normalizeServerURL(value: string | undefined): string | undefined {
   const normalized = value?.trim().replace(/\/$/, '')
   return normalized || undefined
@@ -29,7 +32,8 @@ export async function getServerHomePageContent(): Promise<string> {
 
   try {
     const response = await fetch(`${origin}/api/home_page_content`, {
-      cache: 'no-store',
+      next: { revalidate: REVALIDATE_SECONDS },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
     if (!response.ok) return ''
 

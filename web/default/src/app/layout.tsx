@@ -28,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <script src='/env.js' />
         {children}
       </body>
     </html>
