@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const CACHE_BUST_VERSION = 'v1'
 const CACHE_BUST_COOKIE = 'cache_bust'
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const res = NextResponse.next()
 
   // Always tell browsers to stop using HTTP/3 for this origin (Caddy/Traefik
