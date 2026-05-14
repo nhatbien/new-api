@@ -2,9 +2,8 @@ FROM oven/bun:1@sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2
 
 WORKDIR /build
 
-ARG VITE_REACT_APP_SERVER_URL
-ENV VITE_REACT_APP_SERVER_URL=${VITE_REACT_APP_SERVER_URL}
-ENV NEXT_PUBLIC_REACT_APP_SERVER_URL=${VITE_REACT_APP_SERVER_URL}
+ARG NEXT_PUBLIC_REACT_APP_SERVER_URL
+ENV NEXT_PUBLIC_REACT_APP_SERVER_URL=${NEXT_PUBLIC_REACT_APP_SERVER_URL}
 
 COPY web/default/package.json ./
 COPY web/default/bun.lock ./
@@ -19,25 +18,16 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Re-declare ARG so it is available in this stage and becomes the default runtime ENV.
-# You can still override at `docker run -e VITE_REACT_APP_SERVER_URL=...`.
-ARG VITE_REACT_APP_SERVER_URL
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=80 \
-    HOSTNAME=0.0.0.0 \
-    VITE_REACT_APP_SERVER_URL=${VITE_REACT_APP_SERVER_URL} \
-    NEXT_PUBLIC_REACT_APP_SERVER_URL=${VITE_REACT_APP_SERVER_URL}
+    HOSTNAME=0.0.0.0
 
 # Next.js standalone output bundles only the files needed at runtime.
 COPY --from=builder /build/.next/standalone ./
 COPY --from=builder /build/.next/static ./.next/static
 COPY --from=builder /build/public ./public
 
-COPY deploy/nginx/docker-entrypoint.d/40-frontend-env.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
-
 EXPOSE 80
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

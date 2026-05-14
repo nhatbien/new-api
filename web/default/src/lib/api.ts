@@ -3,45 +3,19 @@ import i18next from 'i18next'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 
-declare global {
-  interface Window {
-    __APP_CONFIG__?: {
-      VITE_REACT_APP_SERVER_URL?: string
-      NEXT_PUBLIC_REACT_APP_SERVER_URL?: string
-    }
-  }
-}
-
 // ============================================================================
 // Axios Instance Configuration
 // ============================================================================
 
-// Base URL: empty string for same-origin API requests, or set
-// VITE_REACT_APP_SERVER_URL to call a separated backend directly.
+// Base URL: set NEXT_PUBLIC_REACT_APP_SERVER_URL at build time to call a
+// separated backend directly; otherwise empty string for same-origin requests.
 function normalizeServerURL(value: string | undefined): string | undefined {
   const normalized = value?.trim().replace(/\/$/, '')
   return normalized || undefined
 }
 
-const runtimeServerURL =
-  typeof window !== 'undefined' &&
-  window.__APP_CONFIG__ &&
-  Object.prototype.hasOwnProperty.call(
-    window.__APP_CONFIG__,
-    'VITE_REACT_APP_SERVER_URL'
-  )
-    ? normalizeServerURL(window.__APP_CONFIG__.VITE_REACT_APP_SERVER_URL)
-    : typeof window !== 'undefined' &&
-        window.__APP_CONFIG__ &&
-        Object.prototype.hasOwnProperty.call(
-          window.__APP_CONFIG__,
-          'NEXT_PUBLIC_REACT_APP_SERVER_URL'
-        )
-      ? normalizeServerURL(window.__APP_CONFIG__.NEXT_PUBLIC_REACT_APP_SERVER_URL)
-      : undefined
-
 export const baseURL =
-  runtimeServerURL ?? normalizeServerURL(process.env.NEXT_PUBLIC_REACT_APP_SERVER_URL) ?? ''
+  normalizeServerURL(process.env.NEXT_PUBLIC_REACT_APP_SERVER_URL) ?? ''
 
 export function getApiUrl(path: string): string {
   if (!baseURL) return path

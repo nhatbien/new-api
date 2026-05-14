@@ -7,10 +7,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_REACT_APP_SERVER_URL:
       process.env.NEXT_PUBLIC_REACT_APP_SERVER_URL || '',
-    NEXT_PUBLIC_APP_VERSION:
-      process.env.NEXT_PUBLIC_APP_VERSION ||
-      process.env.VITE_REACT_APP_VERSION ||
-      '',
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '',
   },
   images: {
     unoptimized: true,
