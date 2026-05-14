@@ -5,7 +5,7 @@ export const runtime = 'nodejs'
 
 const BACKEND_URL = (process.env.BACKEND_URL || '').replace(/\/$/, '')
 
-const HOP_BY_HOP = new Set([
+const HOP_BY_HOP_REQUEST = new Set([
   'connection',
   'keep-alive',
   'proxy-authenticate',
@@ -15,6 +15,24 @@ const HOP_BY_HOP = new Set([
   'transfer-encoding',
   'upgrade',
   'host',
+  'content-length',
+  // Strip Accept-Encoding so undici doesn't negotiate compression upstream
+  // (we'd then have to re-encode the auto-decompressed body to match).
+  'accept-encoding',
+])
+
+const HOP_BY_HOP_RESPONSE = new Set([
+  'connection',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailers',
+  'transfer-encoding',
+  'upgrade',
+  // undici auto-decompresses; the body we pass on is plaintext, so the
+  // upstream content-encoding/content-length no longer match reality.
+  'content-encoding',
   'content-length',
 ])
 
@@ -31,7 +49,7 @@ async function proxy(req: NextRequest) {
 
   const headers = new Headers()
   for (const [k, v] of req.headers.entries()) {
-    if (!HOP_BY_HOP.has(k.toLowerCase())) headers.set(k, v)
+    if (!HOP_BY_HOP_REQUEST.has(k.toLowerCase())) headers.set(k, v)
   }
 
   const body =
@@ -49,7 +67,7 @@ async function proxy(req: NextRequest) {
 
   const respHeaders = new Headers()
   upstream.headers.forEach((v, k) => {
-    if (!HOP_BY_HOP.has(k.toLowerCase())) respHeaders.set(k, v)
+    if (!HOP_BY_HOP_RESPONSE.has(k.toLowerCase())) respHeaders.set(k, v)
   })
 
   return new Response(upstream.body, {
