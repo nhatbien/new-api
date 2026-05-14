@@ -465,6 +465,14 @@ function ChatPresetPage() {
   )
 }
 
+function redirectToSignIn(pathname: string) {
+  if (typeof window === 'undefined') return
+  const target = `/sign-in?redirect=${encodeURIComponent(pathname)}`
+  // Hard navigation is more reliable than router.replace inside the catch-all
+  // client shell, especially when the auth store transitions to null mid-flow.
+  window.location.replace(target)
+}
+
 function AuthGuard(props: { route: AuthenticatedRoute }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -473,7 +481,7 @@ function AuthGuard(props: { route: AuthenticatedRoute }) {
 
   useEffect(() => {
     if (!user || !accessToken) {
-      router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`)
+      redirectToSignIn(pathname)
       return
     }
 
@@ -486,11 +494,11 @@ function AuthGuard(props: { route: AuthenticatedRoute }) {
             return
           }
           useAuthStore.getState().auth.reset()
-          router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`)
+          redirectToSignIn(pathname)
         })
         .catch(() => {
           useAuthStore.getState().auth.reset()
-          router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`)
+          redirectToSignIn(pathname)
         })
     }
   }, [accessToken, pathname, router, user])

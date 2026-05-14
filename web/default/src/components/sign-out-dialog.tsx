@@ -28,9 +28,10 @@ export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
       /* empty */
     }
     toast.success(t('Signed out'))
-    // Refresh the page to clear all state and update UI
+    // Hard-navigate to sign-in to fully reset app state and avoid lingering
+    // authenticated routes after logout.
     if (typeof window !== 'undefined') {
-      window.location.reload()
+      window.location.replace('/sign-in')
     }
   }
 
