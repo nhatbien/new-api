@@ -25,7 +25,7 @@ async function getRequestOrigin(): Promise<string | undefined> {
 
 export async function getServerHomePageContent(): Promise<string> {
   const configuredOrigin = normalizeServerURL(
-    process.env.NEXT_PUBLIC_REACT_APP_SERVER_URL
+    process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_REACT_APP_SERVER_URL
   )
   const origin = configuredOrigin ?? (await getRequestOrigin())
   if (!origin) return ''

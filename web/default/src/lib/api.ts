@@ -7,20 +7,13 @@ import { useAuthStore } from '@/stores/auth-store'
 // Axios Instance Configuration
 // ============================================================================
 
-// Base URL: set NEXT_PUBLIC_REACT_APP_SERVER_URL at build time to call a
-// separated backend directly; otherwise empty string for same-origin requests.
-function normalizeServerURL(value: string | undefined): string | undefined {
-  const normalized = value?.trim().replace(/\/$/, '')
-  return normalized || undefined
-}
-
-export const baseURL =
-  normalizeServerURL(process.env.NEXT_PUBLIC_REACT_APP_SERVER_URL) ?? ''
+// Same-origin requests. Next.js `rewrites()` in next.config.ts proxies
+// /api/* and /v1/* to the backend at request time (no CORS preflight).
+export const baseURL = ''
 
 export function getApiUrl(path: string): string {
-  if (!baseURL) return path
   if (/^https?:\/\//i.test(path)) return path
-  return `${baseURL}${path.startsWith('/') ? path : `/${path}`}`
+  return path.startsWith('/') ? path : `/${path}`
 }
 
 function normalizeRequestUrl(url?: string): string | undefined {
