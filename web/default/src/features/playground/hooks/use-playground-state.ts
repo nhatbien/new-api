@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DEFAULT_CONFIG, DEFAULT_PARAMETER_ENABLED } from '../constants'
 import {
   loadConfig,
@@ -35,33 +35,43 @@ function createEmptyConversation(): Conversation {
  * Main state management hook for playground
  */
 export function usePlaygroundState() {
-  const [config, setConfig] = useState<PlaygroundConfig>(() => {
-    const savedConfig = loadConfig()
-    return { ...DEFAULT_CONFIG, ...savedConfig }
-  })
-
+  // Initialize with stable defaults so SSR and first client render match.
+  // Real values are loaded from localStorage in the effect below.
+  const [config, setConfig] = useState<PlaygroundConfig>(DEFAULT_CONFIG)
   const [parameterEnabled, setParameterEnabled] = useState<ParameterEnabled>(
-    () => {
-      const saved = loadParameterEnabled()
-      return { ...DEFAULT_PARAMETER_ENABLED, ...saved }
-    }
+    DEFAULT_PARAMETER_ENABLED
   )
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [activeId, setActiveId] = useState<string>('')
+  const hydratedRef = useRef(false)
 
-  const [conversations, setConversations] = useState<Conversation[]>(() => {
+  useEffect(() => {
+    if (hydratedRef.current) return
+    hydratedRef.current = true
+
+    setConfig({ ...DEFAULT_CONFIG, ...loadConfig() })
+    setParameterEnabled({
+      ...DEFAULT_PARAMETER_ENABLED,
+      ...loadParameterEnabled(),
+    })
+
     const existing = loadConversations()
-    if (existing.length > 0) return existing
-    const fresh = createEmptyConversation()
-    saveConversations([fresh])
-    saveActiveConversationId(fresh.id)
-    return [fresh]
-  })
-
-  const [activeId, setActiveId] = useState<string>(() => {
-    const saved = loadActiveConversationId()
-    const loaded = loadConversations()
-    if (saved && loaded.some((c) => c.id === saved)) return saved
-    return loaded[0]?.id ?? ''
-  })
+    if (existing.length > 0) {
+      setConversations(existing)
+      const savedActive = loadActiveConversationId()
+      setActiveId(
+        savedActive && existing.some((c) => c.id === savedActive)
+          ? savedActive
+          : existing[0].id
+      )
+    } else {
+      const fresh = createEmptyConversation()
+      saveConversations([fresh])
+      saveActiveConversationId(fresh.id)
+      setConversations([fresh])
+      setActiveId(fresh.id)
+    }
+  }, [])
 
   const [models, setModels] = useState<ModelOption[]>([])
   const [groups, setGroups] = useState<GroupOption[]>([])
