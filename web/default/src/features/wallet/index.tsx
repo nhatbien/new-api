@@ -12,8 +12,12 @@ import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
 import { PaymentConfirmDialog } from './components/dialogs/payment-confirm-dialog'
+import { PaymentSuccessDialog } from './components/dialogs/payment-success-dialog'
 import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
+import { getUserBillingHistory } from './api'
+import { QR_PAYMENT_TIMEOUT_MS, QR_PAYMENT_POLL_INTERVAL_MS } from './constants'
+import type { TopupRecord } from './types'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
 import { WalletStatsCard } from './components/wallet-stats-card'
 import {
@@ -62,7 +66,14 @@ export function Wallet(props: WalletProps) {
     useState<CreemProduct | null>(null)
   const [showSubscriptionPanel, setShowSubscriptionPanel] = useState(true)
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null)
+  const [qrExpiresAt, setQrExpiresAt] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState('topup')
+  const [successOpen, setSuccessOpen] = useState(false)
+  const [successInfo, setSuccessInfo] = useState<{
+    topupAmount: number
+    paidAmount?: number
+    tradeNo?: string
+  } | null>(null)
 
   const { status } = useStatus()
   const { currency } = useSystemConfig()
@@ -199,6 +210,9 @@ export function Wallet(props: WalletProps) {
         return
       }
       setPaymentResult(result)
+      if (result.type === 'qr') {
+        setQrExpiresAt(Date.now() + QR_PAYMENT_TIMEOUT_MS)
+      }
       return
     }
 
@@ -207,6 +221,50 @@ export function Wallet(props: WalletProps) {
       await fetchUser()
     }
   }
+
+  // Poll for QR (bank transfer) payment completion
+  useEffect(() => {
+    if (
+      !confirmDialogOpen ||
+      !paymentResult ||
+      paymentResult.type !== 'qr' ||
+      !paymentResult.tradeNo
+    ) {
+      return
+    }
+    const tradeNo = paymentResult.tradeNo
+    let cancelled = false
+
+    const poll = async () => {
+      try {
+        const res = await getUserBillingHistory(1, 10, tradeNo)
+        if (cancelled) return
+        const data = (res as { data?: { items?: TopupRecord[] } }).data
+        const record = data?.items?.find((it) => it.trade_no === tradeNo)
+        if (record && record.status === 'success') {
+          setSuccessInfo({
+            topupAmount,
+            paidAmount: record.money,
+            tradeNo: record.trade_no,
+          })
+          setSuccessOpen(true)
+          setConfirmDialogOpen(false)
+          setPaymentResult(null)
+          setQrExpiresAt(null)
+          await fetchUser()
+        }
+      } catch (_e) {
+        // ignore transient errors
+      }
+    }
+
+    const id = window.setInterval(poll, QR_PAYMENT_POLL_INTERVAL_MS)
+    poll()
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [confirmDialogOpen, paymentResult, topupAmount, fetchUser])
 
   // Handle redemption
   const handleRedeem = async () => {
@@ -428,7 +486,10 @@ export function Wallet(props: WalletProps) {
         open={confirmDialogOpen}
         onOpenChange={(open) => {
           setConfirmDialogOpen(open)
-          if (!open) setPaymentResult(null)
+          if (!open) {
+            setPaymentResult(null)
+            setQrExpiresAt(null)
+          }
         }}
         onConfirm={handlePaymentConfirm}
         topupAmount={topupAmount}
@@ -438,6 +499,18 @@ export function Wallet(props: WalletProps) {
         processing={processing || pancakeProcessing}
         discountRate={getDiscountRate()}
         paymentResult={paymentResult}
+        qrExpiresAt={qrExpiresAt}
+      />
+
+      <PaymentSuccessDialog
+        open={successOpen}
+        onOpenChange={(open) => {
+          setSuccessOpen(open)
+          if (!open) setSuccessInfo(null)
+        }}
+        topupAmount={successInfo?.topupAmount ?? 0}
+        paidAmount={successInfo?.paidAmount}
+        tradeNo={successInfo?.tradeNo}
       />
 
       <TransferDialog

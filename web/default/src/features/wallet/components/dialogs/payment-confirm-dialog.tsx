@@ -1,4 +1,5 @@
-import { ExternalLink, Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ExternalLink, Loader2, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   formatPaymentLocalCurrencyAmount,
@@ -31,6 +32,8 @@ interface PaymentConfirmDialogProps {
   processing: boolean
   discountRate?: number
   paymentResult?: PaymentResult | null
+  qrExpiresAt?: number | null
+  onQrExpired?: () => void
 }
 
 function escapeHtml(value: string): string {
@@ -82,6 +85,8 @@ export function PaymentConfirmDialog({
   processing,
   discountRate = DEFAULT_DISCOUNT_RATE,
   paymentResult,
+  qrExpiresAt,
+  onQrExpired,
 }: PaymentConfirmDialogProps) {
   const { t } = useTranslation()
   const hasDiscount = discountRate > 0 && discountRate < 1 && paymentAmount > 0
@@ -90,6 +95,25 @@ export function PaymentConfirmDialog({
   const discountAmount = hasDiscount ? originalAmount - finalAmount : 0
   const discountPercent = hasDiscount ? Math.round((1 - discountRate) * 100) : 0
   const isAwaitingPayment = !!paymentResult
+  const isQrPayment = paymentResult?.type === 'qr'
+
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!isQrPayment || !qrExpiresAt) return
+    setNow(Date.now())
+    const id = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(id)
+  }, [isQrPayment, qrExpiresAt])
+
+  const remainingMs = qrExpiresAt ? Math.max(0, qrExpiresAt - now) : 0
+  const remainingSec = Math.floor(remainingMs / 1000)
+  const mm = String(Math.floor(remainingSec / 60)).padStart(2, '0')
+  const ss = String(remainingSec % 60).padStart(2, '0')
+  const isExpired = isQrPayment && !!qrExpiresAt && remainingMs <= 0
+
+  useEffect(() => {
+    if (isExpired && onQrExpired) onQrExpired()
+  }, [isExpired, onQrExpired])
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -191,6 +215,23 @@ export function PaymentConfirmDialog({
                     </span>
                   </div>
                 )}
+                {qrExpiresAt && (
+                  <div
+                    className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium ${
+                      isExpired
+                        ? 'border-destructive/30 bg-destructive/10 text-destructive'
+                        : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                    }`}
+                  >
+                    <Clock className='h-4 w-4' />
+                    {isExpired
+                      ? t('QR code expired')
+                      : t('Expires in {{time}}', { time: `${mm}:${ss}` })}
+                  </div>
+                )}
+                <div className='text-muted-foreground text-xs'>
+                  {t('Waiting for bank transfer. Balance will be updated automatically.')}
+                </div>
               </div>
             </div>
           )}
@@ -222,17 +263,23 @@ export function PaymentConfirmDialog({
           )}
         </div>
 
-        <AlertDialogFooter className='grid grid-cols-2 gap-2 sm:flex'>
+        <AlertDialogFooter
+          className={
+            isQrPayment ? 'flex justify-end' : 'grid grid-cols-2 gap-2 sm:flex'
+          }
+        >
           <AlertDialogCancel disabled={processing}>
             {isAwaitingPayment ? t('Close') : t('Cancel')}
           </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            disabled={processing || isAwaitingPayment}
-          >
-            {processing && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            {t('Confirm Payment')}
-          </AlertDialogAction>
+          {!isQrPayment && (
+            <AlertDialogAction
+              onClick={onConfirm}
+              disabled={processing || isAwaitingPayment}
+            >
+              {processing && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              {t('Confirm Payment')}
+            </AlertDialogAction>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

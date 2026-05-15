@@ -53,3 +53,13 @@ export const DEFAULT_DISCOUNT_RATE = 1.0
  * Default minimum topup amount
  */
 export const DEFAULT_MIN_TOPUP = 1
+
+/**
+ * QR-based bank transfer timeout (10 minutes)
+ */
+export const QR_PAYMENT_TIMEOUT_MS = 10 * 60 * 1000
+
+/**
+ * QR-based bank transfer status poll interval
+ */
+export const QR_PAYMENT_POLL_INTERVAL_MS = 3000
