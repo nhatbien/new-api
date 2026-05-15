@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AxiosError } from 'axios'
 import {
   QueryCache,
@@ -12,6 +12,11 @@ import { DirectionProvider } from '@/context/direction-provider'
 import { FontProvider } from '@/context/font-provider'
 import { ThemeProvider } from '@/context/theme-provider'
 import { useAuthStore } from '@/stores/auth-store'
+import {
+  I18N_DEFAULT_LNG,
+  I18N_STORAGE_KEY,
+  I18N_SUPPORTED,
+} from '@/i18n/config'
 import '@/i18n/config'
 import i18next from 'i18next'
 import { toast } from 'sonner'
@@ -69,6 +74,28 @@ function getQueryClient() {
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(getQueryClient)
+
+  useEffect(() => {
+    let stored: string | null = null
+    try {
+      stored = localStorage.getItem(I18N_STORAGE_KEY)
+    } catch {
+      stored = null
+    }
+    const normalized = stored?.split('-')[0]
+    const next =
+      normalized && (I18N_SUPPORTED as readonly string[]).includes(normalized)
+        ? normalized
+        : I18N_DEFAULT_LNG
+    if (next !== i18next.language) {
+      void i18next.changeLanguage(next)
+    }
+    try {
+      localStorage.setItem(I18N_STORAGE_KEY, next)
+    } catch {
+      // ignore storage errors
+    }
+  }, [])
 
   return (
     <QueryClientProvider client={queryClient}>
