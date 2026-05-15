@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { SquarePen } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
 import { getUserModels, getUserGroups } from './api'
 import { PlaygroundChat } from './components/playground-chat'
 import { PlaygroundInput } from './components/playground-input'
@@ -9,6 +12,7 @@ import { createUserMessage, createLoadingAssistantMessage } from './lib'
 import type { Message as MessageType } from './types'
 
 export function Playground() {
+  const { t } = useTranslation()
   const {
     config,
     parameterEnabled,
@@ -19,6 +23,7 @@ export function Playground() {
     setModels,
     setGroups,
     updateConfig,
+    clearMessages,
   } = usePlaygroundState()
 
   const { sendChat, stopGeneration, isGenerating } = useChatHandler({
@@ -154,6 +159,21 @@ export function Playground() {
 
   return (
     <div className='relative flex size-full flex-col overflow-hidden'>
+      {messages.length > 0 && (
+        <div className='pointer-events-none absolute top-2 right-2 z-10'>
+          <Button
+            size='icon-sm'
+            variant='ghost'
+            className='pointer-events-auto'
+            onClick={clearMessages}
+            disabled={isGenerating}
+            title={t('New chat')}
+            aria-label={t('New chat')}
+          >
+            <SquarePen className='size-4' />
+          </Button>
+        </div>
+      )}
       {/* Full-width scroll container: scrolling works even over side whitespace */}
       <div className='flex flex-1 flex-col overflow-hidden'>
         <PlaygroundChat
