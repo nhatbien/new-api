@@ -76,6 +76,28 @@ export interface ChatCompletionChunk {
   }>
 }
 
+// Image generation types
+export type PlaygroundMode = 'chat' | 'image'
+
+export interface ImageGenerationRequest {
+  model: string
+  group?: string
+  prompt: string
+  n?: number
+  size?: string
+  quality?: string
+  response_format?: string
+}
+
+export interface ImageGenerationResponse {
+  created: number
+  data: Array<{
+    url?: string
+    b64_json?: string
+    revised_prompt?: string
+  }>
+}
+
 export interface ChatCompletionResponse {
   id: string
   object: string
@@ -108,6 +130,10 @@ export interface PlaygroundConfig {
   presence_penalty: number
   seed: number | null
   stream: boolean
+  mode: PlaygroundMode
+  imageSize: string
+  imageN: number
+  imageQuality: string
 }
 
 export interface ParameterEnabled {

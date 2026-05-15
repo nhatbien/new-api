@@ -5,7 +5,7 @@ import { ConversationSidebar } from './components/conversation-sidebar'
 import { PlaygroundChat } from './components/playground-chat'
 import { PlaygroundInput } from './components/playground-input'
 import { DEFAULT_GROUP } from './constants'
-import { usePlaygroundState, useChatHandler } from './hooks'
+import { usePlaygroundState, useChatHandler, useImageHandler } from './hooks'
 import { createUserMessage, createLoadingAssistantMessage } from './lib'
 import type { Message as MessageType } from './types'
 
@@ -27,11 +27,25 @@ export function Playground() {
     deleteConversation,
   } = usePlaygroundState()
 
-  const { sendChat, stopGeneration, isGenerating } = useChatHandler({
+  const { sendChat, stopGeneration: stopChat, isGenerating: isChatGenerating } =
+    useChatHandler({
+      config,
+      parameterEnabled,
+      onMessageUpdate: updateMessages,
+    })
+
+  const {
+    sendImage,
+    stopGeneration: stopImage,
+    isGenerating: isImageGenerating,
+  } = useImageHandler({
     config,
-    parameterEnabled,
     onMessageUpdate: updateMessages,
   })
+
+  const isImageMode = config.mode === 'image'
+  const isGenerating = isImageMode ? isImageGenerating : isChatGenerating
+  const stopGeneration = isImageMode ? stopImage : stopChat
 
   // Edit dialog state
   const [editingMessageKey, setEditingMessageKey] = useState<string | null>(
@@ -91,8 +105,11 @@ export function Playground() {
     const newMessages = [...messages, userMessage, assistantMessage]
     updateMessages(newMessages)
 
-    // Send chat request
-    sendChat(newMessages)
+    if (isImageMode) {
+      sendImage(text)
+    } else {
+      sendChat(newMessages)
+    }
   }
 
   const handleCopyMessage = (message: MessageType) => {
@@ -112,7 +129,15 @@ export function Playground() {
     const newMessages = [...messagesUpToHere, loadingMessage]
 
     updateMessages(newMessages)
-    sendChat(newMessages)
+    if (isImageMode) {
+      const lastUser = [...messagesUpToHere]
+        .reverse()
+        .find((m) => m.from === 'user')
+      const prompt = lastUser?.versions?.[0]?.content || ''
+      if (prompt) sendImage(prompt)
+    } else {
+      sendChat(newMessages)
+    }
   }
 
   const handleEditMessage = useCallback((message: MessageType) => {
@@ -148,9 +173,13 @@ export function Playground() {
         createLoadingAssistantMessage(),
       ]
       updateMessages(toSubmit)
-      sendChat(toSubmit)
+      if (isImageMode) {
+        sendImage(newContent)
+      } else {
+        sendChat(toSubmit)
+      }
     },
-    [editingMessageKey, messages, updateMessages, sendChat]
+    [editingMessageKey, messages, updateMessages, sendChat, sendImage, isImageMode]
   )
 
   const handleDeleteMessage = (message: MessageType) => {
@@ -197,6 +226,16 @@ export function Playground() {
             onModelChange={(value) => updateConfig('model', value)}
             onStop={stopGeneration}
             onSubmit={handleSendMessage}
+            mode={config.mode}
+            onModeChange={(value) => updateConfig('mode', value)}
+            imageSize={config.imageSize}
+            onImageSizeChange={(value) => updateConfig('imageSize', value)}
+            imageN={config.imageN}
+            onImageNChange={(value) => updateConfig('imageN', value)}
+            imageQuality={config.imageQuality}
+            onImageQualityChange={(value) =>
+              updateConfig('imageQuality', value)
+            }
           />
         </div>
       </div>

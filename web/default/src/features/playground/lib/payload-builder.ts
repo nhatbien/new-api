@@ -1,5 +1,6 @@
 import type {
   ChatCompletionRequest,
+  ImageGenerationRequest,
   Message,
   PlaygroundConfig,
   ParameterEnabled,
@@ -45,5 +46,23 @@ export function buildChatCompletionPayload(
     }
   })
 
+  return payload
+}
+
+/**
+ * Build image generation request payload
+ */
+export function buildImageGenerationPayload(
+  prompt: string,
+  config: PlaygroundConfig
+): ImageGenerationRequest {
+  const payload: ImageGenerationRequest = {
+    model: config.model,
+    group: config.group,
+    prompt,
+  }
+  if (config.imageN && config.imageN > 0) payload.n = config.imageN
+  if (config.imageSize) payload.size = config.imageSize
+  if (config.imageQuality) payload.quality = config.imageQuality
   return payload
 }

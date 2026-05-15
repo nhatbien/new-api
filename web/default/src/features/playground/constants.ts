@@ -17,9 +17,50 @@ export const MESSAGE_STATUS = {
 // API endpoints
 export const API_ENDPOINTS = {
   CHAT_COMPLETIONS: '/pg/chat/completions',
+  IMAGES_GENERATIONS: '/pg/images/generations',
   USER_MODELS: '/api/user/models',
   USER_GROUPS: '/api/user/self/groups',
 } as const
+
+// Image generation defaults
+export const IMAGE_SIZE_OPTIONS = [
+  '256x256',
+  '512x512',
+  '1024x1024',
+  '1024x1792',
+  '1792x1024',
+] as const
+
+export const IMAGE_QUALITY_OPTIONS = [
+  'standard',
+  'hd',
+  'low',
+  'medium',
+  'high',
+  'auto',
+] as const
+
+// Heuristic — model names that suggest image generation support.
+// Matches gpt-image*, dall-e*, imagen*, flux*, stable-diffusion*, sd*, etc.
+export const IMAGE_MODEL_PATTERNS: RegExp[] = [
+  /gpt-image/i,
+  /dall[\s-]?e/i,
+  /imagen/i,
+  /flux/i,
+  /stable[\s-]?diffusion/i,
+  /\bsd[-_]/i,
+  /seedream/i,
+  /kolors/i,
+  /ideogram/i,
+  /recraft/i,
+  /grok-2-image/i,
+  /qwen[-_]?image/i,
+]
+
+export function isImageModel(model: string): boolean {
+  if (!model) return false
+  return IMAGE_MODEL_PATTERNS.some((re) => re.test(model))
+}
 
 // Default group
 export const DEFAULT_GROUP = 'auto' as const
@@ -35,6 +76,10 @@ export const DEFAULT_CONFIG: PlaygroundConfig = {
   presence_penalty: 0,
   seed: null,
   stream: true,
+  mode: 'chat',
+  imageSize: '1024x1024',
+  imageN: 1,
+  imageQuality: 'standard',
 }
 
 export const DEFAULT_PARAMETER_ENABLED: ParameterEnabled = {
