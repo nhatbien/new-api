@@ -72,7 +72,7 @@ export function useAuthRedirect() {
     }
 
     // Navigate to target page
-    const targetPath = redirectTo || '/dashboard'
+    const targetPath = redirectTo || '/dashboard/overview'
     navigate({ to: targetPath, replace: true })
   }
 

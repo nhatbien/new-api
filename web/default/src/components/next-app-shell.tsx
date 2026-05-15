@@ -169,7 +169,7 @@ function OAuthBridge() {
         const res = await getSelf()
         if (res?.success) {
           useAuthStore.getState().auth.setUser(res.data as AuthUser)
-          router.replace(search.redirect || '/dashboard')
+          router.replace(search.redirect || '/dashboard/overview')
           return
         }
       } catch {
@@ -259,13 +259,13 @@ function OAuthProviderCallback(props: { provider: string }) {
             }
             useAuthStore.getState().auth.setUser(user)
             toast.success(i18next.t('Signed in successfully!'))
-            safeNavigate(search.redirect || '/dashboard')
+            safeNavigate(search.redirect || '/dashboard/overview')
             return
           }
         }
 
         if (!isBindingFlow && (await finalizeLogin())) {
-          safeNavigate(search.redirect || '/dashboard')
+          safeNavigate(search.redirect || '/dashboard/overview')
           return
         }
 
