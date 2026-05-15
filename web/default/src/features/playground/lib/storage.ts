@@ -1,5 +1,10 @@
 import { STORAGE_KEYS } from '../constants'
-import type { PlaygroundConfig, ParameterEnabled, Message } from '../types'
+import type {
+  PlaygroundConfig,
+  ParameterEnabled,
+  Message,
+  Conversation,
+} from '../types'
 import { sanitizeMessagesOnLoad } from './message-utils'
 
 /**
@@ -105,8 +110,92 @@ export function clearPlaygroundData(): void {
     localStorage.removeItem(STORAGE_KEYS.CONFIG)
     localStorage.removeItem(STORAGE_KEYS.PARAMETER_ENABLED)
     localStorage.removeItem(STORAGE_KEYS.MESSAGES)
+    localStorage.removeItem(STORAGE_KEYS.CONVERSATIONS)
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_CONVERSATION_ID)
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to clear playground data:', error)
   }
+}
+
+/**
+ * Load all conversations from localStorage.
+ * Migrates legacy single-messages storage into a single conversation.
+ */
+export function loadConversations(): Conversation[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS)
+    if (saved) {
+      const parsed: Conversation[] = JSON.parse(saved)
+      return parsed.map((c) => ({
+        ...c,
+        messages: sanitizeMessagesOnLoad(c.messages || []),
+      }))
+    }
+
+    // Migrate legacy messages storage
+    const legacy = loadMessages()
+    if (legacy && legacy.length > 0) {
+      const now = Date.now()
+      const migrated: Conversation = {
+        id: `conv-${now}`,
+        title: deriveConversationTitle(legacy),
+        messages: legacy,
+        createdAt: now,
+        updatedAt: now,
+      }
+      saveConversations([migrated])
+      saveActiveConversationId(migrated.id)
+      localStorage.removeItem(STORAGE_KEYS.MESSAGES)
+      return [migrated]
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load conversations:', error)
+  }
+  return []
+}
+
+export function saveConversations(conversations: Conversation[]): void {
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.CONVERSATIONS,
+      JSON.stringify(conversations)
+    )
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to save conversations:', error)
+  }
+}
+
+export function loadActiveConversationId(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.ACTIVE_CONVERSATION_ID)
+  } catch {
+    return null
+  }
+}
+
+export function saveActiveConversationId(id: string | null): void {
+  try {
+    if (id) {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_CONVERSATION_ID, id)
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_CONVERSATION_ID)
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to save active conversation id:', error)
+  }
+}
+
+/**
+ * Derive a title from the first user message's text content.
+ */
+export function deriveConversationTitle(messages: Message[]): string {
+  const firstUser = messages.find((m) => m.from === 'user')
+  const text = firstUser?.versions?.[0]?.content?.trim() || ''
+  if (!text) return 'New chat'
+  const oneLine = text.replace(/\s+/g, ' ')
+  return oneLine.length > 40 ? `${oneLine.slice(0, 40)}…` : oneLine
 }

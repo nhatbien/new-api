@@ -51,7 +51,11 @@ export const STORAGE_KEYS = {
   CONFIG: 'playground_config',
   MESSAGES: 'playground_messages',
   PARAMETER_ENABLED: 'playground_parameter_enabled',
+  CONVERSATIONS: 'playground_conversations',
+  ACTIVE_CONVERSATION_ID: 'playground_active_conversation_id',
 } as const
+
+export const MAX_CONVERSATION_TITLE_LENGTH = 40 as const
 
 // Error messages
 export const ERROR_MESSAGES = {
